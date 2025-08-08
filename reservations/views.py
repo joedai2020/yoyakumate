@@ -22,28 +22,30 @@ def home(request):
 # 一般ユーザー登録
 def register(request):
     if request.method == 'POST':
-        submit_type = request.POST.get('submit_type')
-        if submit_type == 'admin':
+        user_type = request.POST.get('user_type', 'user')  # POSTのuser_typeを取得（なければ'user'）
+        if user_type == 'admin':
             admin_form = AdminRegisterForm(request.POST)
-            normal_form = UserRegisterForm()  # 空表单
+            normal_form = UserRegisterForm()
             if admin_form.is_valid():
                 admin_form.save()
                 messages.success(request, '管理者登録が完了しました。ログインしてください。')
                 return redirect('reservations:login')
         else:
             normal_form = UserRegisterForm(request.POST)
-            admin_form = AdminRegisterForm()  # 空表单
+            admin_form = AdminRegisterForm()
             if normal_form.is_valid():
                 normal_form.save()
                 messages.success(request, '一般ユーザー登録が完了しました。ログインしてください。')
                 return redirect('reservations:login')
     else:
+        user_type = 'user'  # デフォルト値
         normal_form = UserRegisterForm()
         admin_form = AdminRegisterForm()
 
     return render(request, 'reservations/register.html', {
         'normal_form': normal_form,
         'admin_form': admin_form,
+        'user_type': user_type,  # テンプレートに渡す
     })
 
 # ログイン

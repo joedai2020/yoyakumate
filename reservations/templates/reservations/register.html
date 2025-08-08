@@ -4,23 +4,24 @@
 {% block content %}
 <h2>ユーザー登録</h2>
 
-<!-- 切换用户类型选项 -->
-<form method="post">
+<form method="post" action="{% url 'reservations:register' %}">
   {% csrf_token %}
   
+  <!-- ユーザータイプ選択ラジオボタン -->
   <div class="form-check">
     <input class="form-check-input" type="radio" name="user_type" value="user" checked id="userRadio">
     <label class="form-check-label" for="userRadio">一般ユーザー</label>
   </div>
-  <div class="form-check">
+  <div class="form-check mb-3">
     <input class="form-check-input" type="radio" name="user_type" value="admin" id="adminRadio">
     <label class="form-check-label" for="adminRadio">管理者</label>
   </div>
 
+  <!-- 一般ユーザー登録フォーム -->
   <div id="userForm">
     <h4>一般ユーザー登録</h4>
     {% for field in normal_form %}
-      <div class="form-group">
+      <div class="mb-3">
         {{ field.label_tag }}
         {{ field }}
         {% for error in field.errors %}
@@ -30,10 +31,11 @@
     {% endfor %}
   </div>
 
+  <!-- 管理者登録フォーム（初期は非表示） -->
   <div id="adminForm" style="display:none;">
     <h4>管理者登録</h4>
     {% for field in admin_form %}
-      <div class="form-group">
+      <div class="mb-3">
         {{ field.label_tag }}
         {{ field }}
         {% for error in field.errors %}
@@ -43,13 +45,13 @@
     {% endfor %}
   </div>
 
-  <button type="submit" class="btn btn-primary">登録</button>
+  <button type="submit" class="btn btn-primary mt-3">登録</button>
 </form>
 
 <p><a href="{% url 'reservations:login' %}">ログインはこちら</a></p>
 
 {% for message in messages %}
-  <p style="color:green">{{ message }}</p>
+  <div class="alert alert-success" role="alert">{{ message }}</div>
 {% endfor %}
 
 <script>
@@ -59,20 +61,36 @@ document.addEventListener("DOMContentLoaded", function () {
   const userForm = document.getElementById("userForm");
   const adminForm = document.getElementById("adminForm");
 
+  // Djangoから渡されたuser_typeをJSに渡す
+  const initialUserType = "{{ user_type }}";
+
+  // ラジオボタンの初期選択をサーバからの値に合わせる
+  if (initialUserType === "admin") {
+    adminRadio.checked = true;
+  } else {
+    userRadio.checked = true;
+  }
+
   function toggleForms() {
     if (adminRadio.checked) {
       userForm.style.display = "none";
       adminForm.style.display = "block";
+
+      userForm.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+      adminForm.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
     } else {
       userForm.style.display = "block";
       adminForm.style.display = "none";
+
+      userForm.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+      adminForm.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
     }
   }
 
   userRadio.addEventListener("change", toggleForms);
   adminRadio.addEventListener("change", toggleForms);
 
-  toggleForms(); // 初期表示
+  toggleForms();
 });
 </script>
 
