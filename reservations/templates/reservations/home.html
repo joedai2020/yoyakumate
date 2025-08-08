@@ -1,0 +1,35 @@
+{% extends 'reservations/base.html' %}
+
+{% block title %}ホーム | YoyakuMate{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="mb-4 font-weight-bold">ようこそ、YoyakuMateへ！</h1>
+    <p class="lead">地域の施設を簡単に予約できる便利なシステムです。</p>
+
+    <div class="mt-5 row justify-content-center">
+        <div class="col-12 col-md-6 mb-3">
+            <a href="{% url 'reservations:facility_list' %}" class="btn btn-lg btn-outline-primary btn-block">
+                施設を見る・予約する
+            </a>
+        </div>
+        <div class="col-12 col-md-6 mb-3">
+            <a href="{% url 'reservations:community_list' %}" class="btn btn-lg btn-outline-success btn-block">
+                管理所（コミュニティ）を見る
+            </a>
+        </div>
+        <div class="col-12 col-md-6 mb-3">
+            <a href="{% url 'reservations:reservation_list' %}" class="btn btn-lg btn-outline-info btn-block">
+                自分の予約を確認
+            </a>
+        </div>
+        {% if not user.is_authenticated %}
+        <div class="col-12 col-md-6 mb-3">
+            <a href="{% url 'reservations:register' %}" class="btn btn-lg btn-outline-secondary btn-block">
+                ユーザー登録はこちら
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
