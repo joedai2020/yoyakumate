@@ -1,0 +1,79 @@
+{% extends "reservations/base.html" %}
+{% block title %}ユーザー登録{% endblock %}
+
+{% block content %}
+<h2>ユーザー登録</h2>
+
+<!-- 切换用户类型选项 -->
+<form method="post">
+  {% csrf_token %}
+  
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="user_type" value="user" checked id="userRadio">
+    <label class="form-check-label" for="userRadio">一般ユーザー</label>
+  </div>
+  <div class="form-check">
+    <input class="form-check-input" type="radio" name="user_type" value="admin" id="adminRadio">
+    <label class="form-check-label" for="adminRadio">管理者</label>
+  </div>
+
+  <div id="userForm">
+    <h4>一般ユーザー登録</h4>
+    {% for field in normal_form %}
+      <div class="form-group">
+        {{ field.label_tag }}
+        {{ field }}
+        {% for error in field.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="adminForm" style="display:none;">
+    <h4>管理者登録</h4>
+    {% for field in admin_form %}
+      <div class="form-group">
+        {{ field.label_tag }}
+        {{ field }}
+        {% for error in field.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+
+  <button type="submit" class="btn btn-primary">登録</button>
+</form>
+
+<p><a href="{% url 'reservations:login' %}">ログインはこちら</a></p>
+
+{% for message in messages %}
+  <p style="color:green">{{ message }}</p>
+{% endfor %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const userRadio = document.getElementById("userRadio");
+  const adminRadio = document.getElementById("adminRadio");
+  const userForm = document.getElementById("userForm");
+  const adminForm = document.getElementById("adminForm");
+
+  function toggleForms() {
+    if (adminRadio.checked) {
+      userForm.style.display = "none";
+      adminForm.style.display = "block";
+    } else {
+      userForm.style.display = "block";
+      adminForm.style.display = "none";
+    }
+  }
+
+  userRadio.addEventListener("change", toggleForms);
+  adminRadio.addEventListener("change", toggleForms);
+
+  toggleForms(); // 初期表示
+});
+</script>
+
+{% endblock %}

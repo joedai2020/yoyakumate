@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>招待コードを生成</h1>
+<form method="post">{% csrf_token %}
+    <label for="community">管理所を選択してください：</label>
+    <select name="community" id="community">
+        {% for c in communities %}
+            <option value="{{ c.pk }}">{{ c.name }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">生成</button>
+</form>
+{% endblock %}
