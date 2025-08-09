@@ -1,0 +1,30 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>管理者ホーム</h2>
+    <p>ようこそ、{{ request.user.username }} さん。</p>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">設備管理</h5>
+                    <p class="card-text">設備の追加、更新、削除を行います。</p>
+                    <a href="{% url 'reservations:facility_list' %}" class="btn btn-primary">管理する</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">予約一覧</h5>
+                    <p class="card-text">すべての予約状況を確認します。</p>
+                    <a href="{% url 'reservations:reservation_list' %}" class="btn btn-success">確認する</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>予約一覧</h2>
+
+    {% if reservations %}
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>施設名</th>
+                <th>開始時間</th>
+                <th>終了時間</th>
+                <th>予約人数</th>
+                <th>状態</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for res in reservations %}
+            <tr>
+                <!-- 施設名を表示 -->
+                <td>{{ res.facility.name }}</td>
+                <!-- 予約の開始時間 -->
+                <td>{{ res.start_time }}</td>
+                <!-- 予約の終了時間 -->
+                <td>{{ res.end_time }}</td>
+                <!-- 予約人数 -->
+                <td>{{ res.number_of_people }}</td>
+                <!-- 予約状態 -->
+                <td>{{ res.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <!-- 予約がない場合のメッセージ -->
+    <p>予約はありません。</p>
+    {% endif %}
+</div>
+{% endblock %}

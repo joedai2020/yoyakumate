@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import CustomUser, InvitationCode, ManagementOffice
+from .models import CustomUser, InvitationCode, ManagementOffice, Facility
 
 # 一般用户登録フォーム
 class UserRegisterForm(UserCreationForm):
@@ -60,3 +60,10 @@ class AdminRegisterForm(UserCreationForm):
             invitation.save()
 
         return user
+
+
+class FacilityForm(forms.ModelForm):
+
+    class Meta:
+        model = Facility
+        fields = ['office', 'name', 'description']  # 必要に応じてフィールドを調整

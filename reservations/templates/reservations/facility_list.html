@@ -1,0 +1,44 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>施設一覧</h2>
+
+    <!-- 施設追加ボタン -->
+    <div class="mb-3">
+        <a href="{% url 'reservations:facility_create' %}" class="btn btn-success">施設を追加</a>
+    </div>
+
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>名前</th>
+                <th>説明</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for facility in facilities %}
+            <tr>
+                <!-- 施設名 -->
+                <td>{{ facility.name }}</td>
+
+                <!-- 説明文 -->
+                <td>{{ facility.description }}</td>
+
+                <!-- 編集・削除ボタン -->
+                <td>
+                    <a href="{% url 'reservations:facility_edit' facility.id %}" class="btn btn-sm btn-primary">編集</a>
+                    <a href="{% url 'reservations:facility_delete' facility.id %}" class="btn btn-sm btn-danger">削除</a>
+                </td>
+            </tr>
+            {% empty %}
+            <!-- 施設が存在しない場合 -->
+            <tr>
+                <td colspan="3">施設が登録されていません。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
