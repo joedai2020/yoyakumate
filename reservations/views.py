@@ -2,10 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .forms import UserRegisterForm, AdminRegisterForm, FacilityForm
-from .models import ManagementOffice, Facility, Reservation
+from .models import Facility, Reservation, FacilityTimeSlot
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ObjectDoesNotExist
+from .utils import get_timeslot_formset
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -108,26 +109,54 @@ def facility_list(request):
 
 @login_required
 def facility_create(request):
+    office = request.user.managerprofile.office
+    TimeSlotFormSet = get_timeslot_formset()
     if request.method == 'POST':
         form = FacilityForm(request.POST)
-        if form.is_valid():
-            form.save()
+        formset = TimeSlotFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            facility = form.save(commit=False)
+            facility.office = office
+            facility.save()
+            
+            formset.instance = facility
+            formset.save()
             return redirect('reservations:facility_list')
     else:
         form = FacilityForm()
-    return render(request, 'reservations/facility_form.html', {'form': form, 'title': '施設追加'})
+        formset = TimeSlotFormSet()
+        
+    return render(request, 'reservations/facility_form.html', {
+        'form': form,
+        'formset': formset,
+        'title': '施設追加',
+        'office_name': office.name })
+
 
 @login_required
 def facility_edit(request, pk):
     facility = get_object_or_404(Facility, pk=pk)
+    TimeSlotFormSet = get_timeslot_formset()
+
     if request.method == 'POST':
         form = FacilityForm(request.POST, instance=facility)
-        if form.is_valid():
+        formset = TimeSlotFormSet(request.POST, instance=facility)
+
+        if form.is_valid() and formset.is_valid():
             form.save()
+            formset.save()
             return redirect('reservations:facility_list')
     else:
         form = FacilityForm(instance=facility)
-    return render(request, 'reservations/facility_form.html', {'form': form, 'title': '施設編集'})
+        formset = TimeSlotFormSet(instance=facility)
+
+    return render(request, 'reservations/facility_form.html', {
+        'form': form,
+        'formset': formset,
+        'title': '施設編集',
+        'office_name': facility.office.name,
+    })
+
 
 @login_required
 def facility_delete(request, pk):
@@ -135,7 +164,11 @@ def facility_delete(request, pk):
     if request.method == 'POST':
         facility.delete()
         return redirect('reservations:facility_list')
-    return render(request, 'reservations/facility_confirm_delete.html', {'facility': facility})
+
+    return render(request, 'reservations/facility_confirm_delete.html', {
+        'facility': facility
+    })
+    
 # 設備管理終了
 
 

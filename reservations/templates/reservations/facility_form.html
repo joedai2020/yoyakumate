@@ -5,9 +5,91 @@
     <h2>{{ title }}</h2>
     <form method="post" novalidate>
         {% csrf_token %}
+        <p><strong>管理所:</strong> {{ office_name }}</p>
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">保存</button>
-        <a href="{% url 'reservations:facility_list' %}" class="btn btn-secondary">キャンセル</a>
+
+        <h4>時間枠設定</h4>
+
+        {% if formset.non_form_errors %}
+        <div class="alert alert-danger">
+            {% for error in formset.non_form_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div id="timeslot-forms">
+            {{ formset.management_form }}
+            {% for subform in formset %}
+                <div class="border p-2 mb-2 timeslot-form">
+                    {{ subform.as_p }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- 使用flex布局，按钮分左右排列 -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button type="button" id="add-timeslot-btn" class="btn btn-info">
+                時間枠を追加
+            </button>
+            <div>
+                <button type="submit" class="btn btn-primary me-2">
+                    保存
+                </button>
+                <a href="{% url 'reservations:facility_list' %}" class="btn btn-secondary">
+                    キャンセル
+                </a>
+            </div>
+        </div>
     </form>
 </div>
+
+<script>
+document.getElementById('add-timeslot-btn').addEventListener('click', function() {
+    const formsDiv = document.getElementById('timeslot-forms');
+    // 管理フォームのTOTAL_FORMSのinputを取得
+    const totalFormsInput = formsDiv.querySelector('input[name$="-TOTAL_FORMS"]');
+    let totalForms = parseInt(totalFormsInput.value);
+
+    // 最初のフォームをクローン
+    const firstForm = formsDiv.querySelector('.timeslot-form');
+    const newForm = firstForm.cloneNode(true);
+
+    // 新しいフォームのinputをクリア
+    newForm.querySelectorAll('input').forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+            input.checked = false;  // チェックボックス・ラジオはチェック解除
+        } else {
+            input.value = '';       // それ以外は値を空にする
+        }
+    });
+
+    // フォーム内のindex番号を置換（-0- → -totalForms-）
+    newForm.innerHTML = newForm.innerHTML.replace(/-\d+-/g, `-${totalForms}-`);
+
+    // 既存の最後の時間枠の終了時間(input)を取得
+    const lastEndInput = formsDiv.querySelector(`input[name="form-${totalForms - 1}-end_time"]`);
+    // 新しいフォームの開始時間(input)を取得
+    const newStartInput = newForm.querySelector(`input[name="form-${totalForms}-start_time"]`);
+
+    // どちらも存在すれば、新しい開始時間に最後の終了時間をセット
+    if (lastEndInput && newStartInput) {
+        newStartInput.value = lastEndInput.value;  // 最後の終了時間を開始時間に設定
+    }
+
+    // 新しいフォームを追加
+    formsDiv.appendChild(newForm);
+
+    // TOTAL_FORMSの値をインクリメント
+    totalFormsInput.value = totalForms + 1;
+});
+</script>
 {% endblock %}

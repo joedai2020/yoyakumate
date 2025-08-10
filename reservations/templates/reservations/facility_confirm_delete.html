@@ -3,7 +3,13 @@
 {% block content %}
 <div class="container mt-4">
     <h2>施設削除確認</h2>
-    <p>本当に「{{ facility.name }}」を削除してもよろしいですか？</p>
+    <p>本当に以下の施設を削除してよろしいですか？</p>
+    <ul>
+        <li><strong>施設名：</strong>{{ facility.name }}</li>
+        <li><strong>管理所：</strong>{{ facility.office.name }}</li>
+        <li><strong>説明：</strong>{{ facility.description|default:"（説明なし）" }}</li>
+    </ul>
+
     <form method="post">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">削除する</button>

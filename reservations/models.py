@@ -30,6 +30,15 @@ class Facility(models.Model):
     def __str__(self):
         return f"{self.office.name} - {self.name}"
 
+# 施設ごとの利用時間帯
+class FacilityTimeSlot(models.Model):
+    facility = models.ForeignKey(Facility, on_delete=models.CASCADE, verbose_name="施設")
+    start_time = models.TimeField(verbose_name="開始時間")
+    end_time = models.TimeField(verbose_name="終了時間")
+
+    def __str__(self):
+        return f"{self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
+
 
 # 管理者プロフィール（管理所に紐づく）
 class ManagerProfile(models.Model):
