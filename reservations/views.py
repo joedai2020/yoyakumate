@@ -1,13 +1,24 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import UserRegisterForm, AdminRegisterForm, FacilityForm, FacilityItemForm
-from .models import Facility, Reservation, FacilityItem
+from django.utils import timezone
 from django.db.models import Count
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
+from django.utils.dateparse import parse_date
+from .models import Reservation, FacilityTimeSlot, TemporaryReservationUser, FacilityItem
+from .forms import UserRegisterForm, AdminRegisterForm, FacilityForm, FacilityItemForm
+from .models import Facility, Reservation, ManagementOffice, FacilityTimeSlot
 from .utils import get_timeslot_formset
+
+
+def is_manager(user):
+    return user.groups.filter(name='manager').exists()
+
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -25,11 +36,15 @@ def root_redirect(request):
 # ホームページ（予約一覧または管理所一覧）
 @login_required
 def user_home(request):
-    # 登録ユーザーなら本人予約展示
-    reservations = Reservation.objects.filter(user=request.user).order_by('-date', 'start_time')
-    return render(request, 'reservations/home.html', {'reservations': reservations})
+    user = request.user
+    reservations = Reservation.objects.filter(user=user)
+    context = {
+        'reservations': reservations,
+    }
+    return render(request, 'reservations/user_home.html', context)
 
 @login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def manager_home(request):
     return render(request, 'reservations/manager_home.html')
 
@@ -98,6 +113,7 @@ def logout_view(request):
 
 # 設備管理開始
 @login_required  # ログインユーザーのみアクセス可能
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def facility_list(request):
     
     # データベースから全ての施設を取得し、名前順に並べる
@@ -111,6 +127,7 @@ def facility_list(request):
     })
 
 @login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def facility_create(request):
     office = request.user.managerprofile.office
     TimeSlotFormSet = get_timeslot_formset()
@@ -137,6 +154,7 @@ def facility_create(request):
 
 
 @login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def facility_edit(request, pk):
     facility = get_object_or_404(Facility, pk=pk)
     TimeSlotFormSet = get_timeslot_formset()
@@ -162,6 +180,7 @@ def facility_edit(request, pk):
 
 
 @login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def facility_delete(request, pk):
     facility = get_object_or_404(Facility, pk=pk)
     if request.method == 'POST':
@@ -246,3 +265,100 @@ def reservation_list(request):
     return render(request, 'reservations/reservation_list.html', {
         'reservations': reservations,
     })
+
+def api_facilities(request):
+    # 管理所IDをGETパラメータから取得
+    office_id = request.GET.get('office_id')
+    if not office_id:
+        return JsonResponse({'facilities': []})
+
+    # 指定管理所の設備一覧を取得
+    facilities = Facility.objects.filter(office_id=office_id).order_by('name')
+    
+    result = []
+    for facility in facilities:
+        items = FacilityItem.objects.filter(facility=facility).values('id', 'item_name').order_by('item_name')
+        result.append({
+            'facility_id': facility.id,
+            'facility_name': facility.name,
+            'items': list(items)
+        })
+    
+    return JsonResponse({'facilities': result})
+
+def api_time_slots(request):
+    facility_item_id = request.GET.get('facility_item_id')
+    if not facility_item_id:
+        return JsonResponse({'time_slots': []})
+
+    slots = FacilityTimeSlot.objects.filter(facility_item_id=facility_item_id)
+    time_slots_list = [{
+        'id': slot.id,
+        'label': f"{slot.start_time.strftime('%H:%M')} - {slot.end_time.strftime('%H:%M')}"
+    } for slot in slots]
+
+    return JsonResponse({'time_slots': time_slots_list})
+
+@require_POST
+@csrf_protect  # CSRFトークン検証を有効化
+def create_reservation(request):
+    # POSTデータ取得
+    facility_id = request.POST.get('facility_id')
+    date_str = request.POST.get('date')
+    time_slot_id = request.POST.get('time_slot_id')
+
+    # バリデーション: 必須パラメータチェック
+    if not (facility_id and date_str and time_slot_id):
+        return JsonResponse({'status': 'error', 'message': '必要なパラメータが不足しています。'}, status=400)
+
+    # 日付フォーマットチェック
+    date = parse_date(date_str)
+    if date is None:
+        return JsonResponse({'status': 'error', 'message': '予約日の日付形式が不正です。'}, status=400)
+
+    # 過去日付予約不可チェック（現在日付と比較）
+    from django.utils.timezone import localdate
+    today = localdate()
+    if date < today:
+        return JsonResponse({'status': 'error', 'message': '過去の日付には予約できません。'}, status=400)
+
+    # FacilityTimeSlotを取得
+    try:
+        time_slot = FacilityTimeSlot.objects.get(id=time_slot_id, facility_id=facility_id)
+    except FacilityTimeSlot.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': '指定された時間帯が存在しません。'}, status=404)
+
+    # ログインユーザー判定
+    if request.user.is_authenticated:
+        user = request.user
+        guest = None
+    else:
+        # 非登録ユーザー処理
+        # 例としてメールアドレスをPOSTから受け取り一時ユーザー作成 or 取得
+        guest_email = request.POST.get('guest_email')
+        if not guest_email:
+            return JsonResponse({'status': 'error', 'message': '非登録ユーザーはメールアドレスが必要です。'}, status=400)
+        guest, created = TemporaryReservationUser.objects.get_or_create(email=guest_email)
+        user = None
+
+    # 予約重複チェック（同施設・同日・同時間帯）
+    exists = Reservation.objects.filter(
+        facility_id=facility_id,
+        date=date,
+        start_time=time_slot.start_time,
+        end_time=time_slot.end_time,
+    ).exists()
+    if exists:
+        return JsonResponse({'status': 'error', 'message': '同じ時間帯の予約がすでに存在します。'}, status=400)
+
+    # 予約を作成
+    reservation = Reservation.objects.create(
+        facility_id=facility_id,
+        date=date,
+        start_time=time_slot.start_time,
+        end_time=time_slot.end_time,
+        user=user,
+        guest=guest,
+    )
+
+    return JsonResponse({'status': 'success', 'reservation_id': reservation.id})

@@ -1,0 +1,17 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<h2>マイ予約一覧</h2>
+
+{% if reservations.exists %}
+  <ul>
+  {% for res in reservations %}
+    <li>{{ res.facility_item }} - {{ res.date }} {{ res.time_slot }}</li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>まだ予約がありません。</p>
+  <a href="{% url 'reservations:create_reservation' %}" class="btn btn-primary">新しい予約を作成</a>
+{% endif %}
+
+{% endblock %}

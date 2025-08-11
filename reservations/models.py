@@ -73,13 +73,13 @@ class TemporaryReservationUser(models.Model):
 
 # 予約モデル（登録・非登録ユーザー共通）
 class Reservation(models.Model):
-    facility = models.ForeignKey(Facility, on_delete=models.CASCADE, verbose_name="施設")
+    facility = models.ForeignKey('Facility', on_delete=models.CASCADE, verbose_name="施設")
     date = models.DateField(verbose_name="予約日")
     start_time = models.TimeField(verbose_name="開始時間")
     end_time = models.TimeField(verbose_name="終了時間")
 
-    user = models.ForeignKey(CustomUser, null=True, blank=True, on_delete=models.SET_NULL, verbose_name="登録ユーザー")
-    guest = models.ForeignKey(TemporaryReservationUser, null=True, blank=True, on_delete=models.SET_NULL, verbose_name="非登録ユーザー")
+    user = models.ForeignKey('CustomUser', null=True, blank=True, on_delete=models.SET_NULL, verbose_name="登録ユーザー")
+    guest = models.ForeignKey('TemporaryReservationUser', null=True, blank=True, on_delete=models.SET_NULL, verbose_name="非登録ユーザー")
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="作成日時")
 
@@ -89,7 +89,8 @@ class Reservation(models.Model):
         ordering = ['-date', 'start_time']
 
     def __str__(self):
-        return f"{self.date} {self.facility} {self.start_time}-{self.end_time}"
+        return f"{self.date} {self.facility} {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
+
     
     
 class InvitationCode(models.Model):
