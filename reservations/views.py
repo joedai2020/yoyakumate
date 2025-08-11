@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .forms import UserRegisterForm, AdminRegisterForm, FacilityForm
-from .models import Facility, Reservation, FacilityTimeSlot
+from .forms import UserRegisterForm, AdminRegisterForm, FacilityForm, FacilityItemForm
+from .models import Facility, Reservation, FacilityItem
+from django.db.models import Count
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ObjectDoesNotExist
@@ -100,7 +101,9 @@ def logout_view(request):
 def facility_list(request):
     
     # データベースから全ての施設を取得し、名前順に並べる
-    facilities = Facility.objects.all().order_by('name')
+    facilities = Facility.objects.annotate(
+        item_count=Count('facilityitem')  # 'items'はFacilityItemのForeignKeyに付けたrelated_name
+    ).order_by('name')
 
     # facility_list.html テンプレートを表示し、施設データを渡す
     return render(request, 'reservations/facility_list.html', {
@@ -129,7 +132,7 @@ def facility_create(request):
     return render(request, 'reservations/facility_form.html', {
         'form': form,
         'formset': formset,
-        'title': '施設追加',
+        'title': '施設タイプ追加',
         'office_name': office.name })
 
 
@@ -153,7 +156,7 @@ def facility_edit(request, pk):
     return render(request, 'reservations/facility_form.html', {
         'form': form,
         'formset': formset,
-        'title': '施設編集',
+        'title': '施設タイプ編集',
         'office_name': facility.office.name,
     })
 
@@ -169,6 +172,58 @@ def facility_delete(request, pk):
         'facility': facility
     })
     
+#施設アイテム
+@login_required
+def facility_item_list(request, facility_id):
+    facility = get_object_or_404(Facility, id=facility_id)
+    items = facility.facilityitem_set.all()  # related_name='items'
+    return render(request, 'reservations/facility_item_list.html', {
+        'facility': facility,
+        'items': items
+    })
+
+@login_required
+def facility_item_create(request, facility_id):
+    facility = get_object_or_404(Facility, id=facility_id)
+    if request.method == 'POST':
+        form = FacilityItemForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.facility = facility
+            item.save()
+            return redirect('reservations:facility_item_list', facility_id=facility.id)
+    else:
+        form = FacilityItemForm()
+    return render(request, 'reservations/facility_item_form.html', {
+        'facility': facility,
+        'form': form
+    })
+
+@login_required
+def facility_item_edit(request, item_id):
+    item = get_object_or_404(FacilityItem, id=item_id)
+    if request.method == 'POST':
+        form = FacilityItemForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            return redirect('reservations:facility_item_list', facility_id=item.facility.id)
+    else:
+        form = FacilityItemForm(instance=item)
+    return render(request, 'reservations/facility_item_form.html', {
+        'facility': item.facility,
+        'form': form
+    })
+
+@login_required
+def facility_item_delete(request, item_id):
+    item = get_object_or_404(FacilityItem, id=item_id)
+    facility_id = item.facility.id
+    if request.method == 'POST':
+        item.delete()
+        return redirect('reservations:facility_item_list', facility_id=facility_id)
+    return render(request, 'reservations/facility_item_confirm_delete.html', {
+        'item': item
+    })
 # 設備管理終了
 
 

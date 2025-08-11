@@ -2,7 +2,7 @@ from django import forms
 from django.forms.models import BaseInlineFormSet
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from .models import CustomUser, InvitationCode, Facility, FacilityTimeSlot, ManagerProfile
+from .models import CustomUser, InvitationCode, Facility, FacilityTimeSlot, ManagerProfile, FacilityItem
 
 # 一般用户登録フォーム
 class UserRegisterForm(UserCreationForm):
@@ -121,3 +121,9 @@ class FacilityTimeSlotFormSet(BaseInlineFormSet):
                 if (start < e and end > s):
                     raise ValidationError('時間帯が重複しています。')
             time_ranges.append((start, end))
+
+
+class FacilityItemForm(forms.ModelForm):
+    class Meta:
+        model = FacilityItem
+        fields = ['item_name', 'description']

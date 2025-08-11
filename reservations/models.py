@@ -21,7 +21,7 @@ class ManagementOffice(models.Model):
         return self.name
 
 
-# 管理所の施設（麻雀・卓球など）
+# 施設タイプ 管理所の施設（麻雀・卓球など）
 class Facility(models.Model):
     office = models.ForeignKey(ManagementOffice, on_delete=models.CASCADE, verbose_name="管理所")
     name = models.CharField(max_length=100, verbose_name="施設名")
@@ -29,6 +29,18 @@ class Facility(models.Model):
 
     def __str__(self):
         return f"{self.office.name} - {self.name}"
+
+# 具体的な施設（例：卓球台1号、麻雀卓2号など）
+class FacilityItem(models.Model):
+    # 施設タイプ
+    facility = models.ForeignKey(Facility, on_delete=models.CASCADE, verbose_name="施設タイプ")
+    # 施設の識別名（例：1号台、2号卓など）
+    item_name = models.CharField(max_length=100, verbose_name="施設識別名")
+    
+    description = models.TextField(blank=True, verbose_name="説明")
+
+    def __str__(self):
+        return f"{self.facility.name} - {self.item_name}"
 
 # 施設ごとの利用時間帯
 class FacilityTimeSlot(models.Model):

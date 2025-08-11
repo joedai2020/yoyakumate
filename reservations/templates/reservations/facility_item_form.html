@@ -1,0 +1,30 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ facility.name }} の設備 {{ form.instance.pk|yesno:"編集,追加" }}</h2>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="id_item_name" class="form-label">設備名</label>
+            <input type="text" name="{{ form.item_name.name }}" id="id_item_name" class="form-control" placeholder="例：1号台、2号卓など" value="{{ form.item_name.value|default_if_none:'' }}">
+            {% if form.item_name.errors %}
+                <div class="text-danger">{{ form.item_name.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_description" class="form-label">説明</label>
+            <textarea name="{{ form.description.name }}" id="id_description" class="form-control" rows="3" placeholder="設備の説明を入力してください（任意）">{{ form.description.value|default_if_none:'' }}</textarea>
+            {% if form.description.errors %}
+                <div class="text-danger">{{ form.description.errors }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{% url 'reservations:facility_item_list' facility.id %}" class="btn btn-secondary ms-2">キャンセル</a>
+    </form>
+</div>
+{% endblock %}

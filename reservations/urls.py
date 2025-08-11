@@ -18,6 +18,12 @@ urlpatterns = [
     path('create/', views.facility_create, name='facility_create'),    # 施設追加
     path('edit/<int:pk>/', views.facility_edit, name='facility_edit'), # 施設編集
     path('delete/<int:pk>/', views.facility_delete, name='facility_delete'), # 施設削除
+    
+    # 設備（FacilityItem）
+    path('facilities/<int:facility_id>/items/', views.facility_item_list, name='facility_item_list'),
+    path('facilities/<int:facility_id>/items/create/', views.facility_item_create, name='facility_item_create'),
+    path('facility-items/<int:item_id>/edit/', views.facility_item_edit, name='facility_item_edit'),
+    path('facility-items/<int:item_id>/delete/', views.facility_item_delete, name='facility_item_delete'),
 
     # # スケジュール関連
     # path('schedule/<int:pk>/', views.schedule_detail, name='schedule_detail'),

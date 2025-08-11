@@ -1,0 +1,37 @@
+{% extends 'reservations/base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ facility.name }} の設備一覧</h2>
+
+    <div class="mb-3">
+        <a href="{% url 'reservations:facility_item_create' facility.id %}" class="btn btn-success">設備を追加</a>
+        <a href="{% url 'reservations:facility_list' %}" class="btn btn-secondary">施設一覧へ戻る</a>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>設備名</th>
+                <th>説明</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.item_name }}</td>
+                <td>{{ item.description }}</td>
+                <td>
+                    <a href="{% url 'reservations:facility_item_edit' item.id %}" class="btn btn-sm btn-primary">編集</a>
+                    <a href="{% url 'reservations:facility_item_delete' item.id %}" class="btn btn-sm btn-danger">削除</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">設備が登録されていません。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>設備削除確認</h2>
+
+    <p>以下の設備を本当に削除してよろしいですか？</p>
+
+    <dl class="row">
+        <dt class="col-sm-3">設備名</dt>
+        <dd class="col-sm-9">{{ item.item_name }}</dd>
+
+        <dt class="col-sm-3">説明</dt>
+        <dd class="col-sm-9">{{ item.description|default:"(説明なし)" }}</dd>
+
+        <dt class="col-sm-3">施設タイプ</dt>
+        <dd class="col-sm-9">{{ item.facility.name }}</dd>
+    </dl>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">削除する</button>
+        <a href="{% url 'reservations:facility_item_list' item.facility.id %}" class="btn btn-secondary ms-2">キャンセル</a>
+    </form>
+</div>
+{% endblock %}
