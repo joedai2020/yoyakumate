@@ -383,27 +383,81 @@ def reservation_list(request):
 # Step 1: 
 # 1. 管理所選択
 @login_required
-def select_office(request):
+def select_office(request, reservation_id=None):
 
-    # セッションクリア    
-    clear_reservation_session(request)
-
+    error = None
     offices = ManagementOffice.objects.all()
     
+    if reservation_id:
+        reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
+
+        request.session['editing_reservation_id'] = reservation.id
+        request.session['selected_office'] = reservation.facilityItem.facility.office.id
+        request.session['selected_facility'] = reservation.facilityItem.facility.id
+        request.session['selected_item'] = reservation.facilityItem.id
+        request.session['selected_date'] = str(reservation.date)
+
+        time_slot = FacilityTimeSlot.objects.filter(
+            facility=reservation.facilityItem.facility,
+            start_time=reservation.start_time,
+            end_time=reservation.end_time
+        ).first()
+        
+        if time_slot:
+            request.session['selected_time_slot'] = str(time_slot.id)
+        else:
+            request.session.pop('selected_time_slot', None)
+
+    # 管理所が1件だけなら自動選択して次へリダイレクト
     if offices.count() == 1:
         request.session['selected_office'] = offices.first().id
+        
+        # 編集モードなら編集用の予約情報もセットする処理は後述
         return redirect('reservations:select_facility')
 
-    if request.method == 'POST':
-        office_id = request.POST.get('office_id')
-        if offices.filter(id=office_id).exists():
-            request.session['selected_office'] = office_id
-            return redirect('reservations:select_facility')
-        else:
-            error = '有効な管理所を選択してください。'
-            return render(request, 'reservations/select_office.html', {'offices': offices, 'error': error})
+    # セッションクリアは編集モードでなければ行う
+    if reservation_id is None:
+        clear_reservation_session(request)
 
-    return render(request, 'reservations/select_office.html', {'offices': offices})
+    # 編集モード処理
+    if reservation_id:
+
+        if request.method == 'POST':
+            office_id = request.POST.get('office_id')
+            if offices.filter(id=office_id).exists():
+                request.session['selected_office'] = office_id
+                return redirect('reservations:select_facility')
+            else:
+                error = '有効な管理所を選択してください。'
+                return render(request, 'reservations/select_office.html', {
+                    'offices': offices,
+                    'error': error,
+                    'selected_office': int(request.session.get('selected_office')),
+                })
+
+    else:
+        # 新規予約モード
+        if request.method == 'POST':
+            office_id = request.POST.get('office_id')
+            if offices.filter(id=office_id).exists():
+                request.session['selected_office'] = office_id
+                request.session.pop('editing_reservation_id', None)
+                return redirect('reservations:select_facility')
+            else:
+                error = '有効な管理所を選択してください。'
+                return render(request, 'reservations/select_office.html', {
+                    'offices': offices,
+                    'error': error,
+                    'selected_office': None,
+                })
+
+    selected_office = request.session.get('selected_office')
+    
+    return render(request, 'reservations/select_office.html', {
+        'offices': offices,
+        'error': error,
+        'selected_office': int(selected_office) if selected_office else None,
+    })
 
 # 2. 施設タイプ選択
 @login_required
@@ -517,32 +571,23 @@ def select_time_slot(request):
 
     item = FacilityItem.objects.get(id=item_id)
 
-    # その日、その施設で予約済みの時間帯IDを取得
-    reserved_time_slot_ids = Reservation.objects.filter(
+    # 編集中の予約IDをセッションから取得（なければ None）
+    editing_reservation_id = request.session.get('editing_reservation_id')
+
+    # 予約済み時間帯のstart_timeを取得。編集中の予約は除外する。
+    reserved_qs = Reservation.objects.filter(
         facilityItem__facility=item.facility,
-        date=selected_date
-    ).values_list('start_time', flat=True)
+        date=selected_date,
+    )
+    if editing_reservation_id:
+        reserved_qs = reserved_qs.exclude(id=editing_reservation_id)
 
-    # 予約済み時間帯のstart_timeに該当するFacilityTimeSlotのIDを取得する必要があるため、
-    # FacilityTimeSlotのstart_time と予約済みstart_time をマッチングさせてIDを取得する処理を作成する。
-    # ここでは簡単に先にFacilityTimeSlotの全件を取得し、予約済みのstart_timeにマッチするものは除外します。
-
-    all_time_slots = FacilityTimeSlot.objects.filter(facility=item.facility).order_by('start_time')
-
-    # 予約済みのstart_timeをセットにする
-    reserved_start_times = set(Reservation.objects.filter(
-        facilityItem__facility=item.facility,
-        date=selected_date
-    ).values_list('start_time', flat=True))
-
-    # 予約済み時間帯を除外した時間帯リスト
-    available_time_slots = [ts for ts in all_time_slots if ts.start_time not in reserved_start_times]
+    reserved_start_times = set(reserved_qs.values_list('start_time', flat=True))
 
     all_time_slots = FacilityTimeSlot.objects.filter(facility=item.facility).order_by('start_time')
 
     available_time_slots = [ts for ts in all_time_slots if ts.start_time not in reserved_start_times]
 
-    # 予約済みの件数メッセージ表示
     reserved_count = len(all_time_slots) - len(available_time_slots)
     if reserved_count > 0:
         messages.info(request, f"{reserved_count}件の時間帯はすでに予約されています。")
@@ -583,15 +628,21 @@ def reserve_confirm(request):
     item = FacilityItem.objects.get(id=item_id)
     time_slot = FacilityTimeSlot.objects.get(id=time_slot_id)
 
+    # 編集中の予約ID（編集モードかどうか判定）
+    editing_reservation_id = request.session.get('editing_reservation_id')
+
     if request.method == 'POST':
-        
-        # 予約済みチェック
-        already_reserved = Reservation.objects.filter(
+
+        # 予約済みチェック（編集中の自分の予約は除外）
+        already_reserved_qs = Reservation.objects.filter(
             facilityItem=item,
             date=selected_date,
             start_time=time_slot.start_time,
             end_time=time_slot.end_time
-        ).exists()
+        )
+        if editing_reservation_id:
+            already_reserved_qs = already_reserved_qs.exclude(id=editing_reservation_id)
+        already_reserved = already_reserved_qs.exists()
 
         if already_reserved:
             error = '選択された日時は既に予約されています。別の時間帯または設備を選択してください。'
@@ -605,13 +656,28 @@ def reserve_confirm(request):
                 'error': error,
             })
         else:
-            Reservation.objects.create(
-                facilityItem=item,
-                date=selected_date,
-                start_time=time_slot.start_time,
-                end_time=time_slot.end_time,
-                user=request.user
-            )
+            if editing_reservation_id:
+                # 既存予約の更新
+                reservation = Reservation.objects.get(id=editing_reservation_id)
+                reservation.facilityItem = item
+                reservation.date = selected_date
+                reservation.start_time = time_slot.start_time
+                reservation.end_time = time_slot.end_time
+                reservation.user = request.user
+                reservation.save()
+                
+                # 編集用セッションはクリア
+                del request.session['editing_reservation_id']
+            else:
+                # 新規予約作成
+                Reservation.objects.create(
+                    facilityItem=item,
+                    date=selected_date,
+                    start_time=time_slot.start_time,
+                    end_time=time_slot.end_time,
+                    user=request.user
+                )
+
             # セッションをクリア
             clear_reservation_session(request)
 

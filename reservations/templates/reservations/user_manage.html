@@ -31,7 +31,6 @@
                 <th>氏名</th>
                 <th>電話番号</th>
                 <th>メールアドレス</th>
-                <th>ユーザー名</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -41,7 +40,6 @@
                 <td>{{ user.full_name }}</td>
                 <td>{{ user.phone }}</td>
                 <td>{{ user.email }}</td>
-                <td>{{ user.username }}</td>
                 <td class="text-center">
                     <a href="{% url 'reservations:user_edit' user.id %}" class="btn btn-sm btn-warning">変更</a>
                 </td>

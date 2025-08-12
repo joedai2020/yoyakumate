@@ -4,7 +4,7 @@
 <style>
   thead th {
     text-align: center;
-    background-color: #dceeff; /* 淡蓝色背景 */
+    background-color: #dceeff;
   }
 </style>
 <h2>マイ予約一覧</h2>
@@ -16,6 +16,7 @@
         <th>設備</th>
         <th>日付</th>
         <th>時間</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody>
@@ -24,6 +25,9 @@
         <td>{{ res.facility_item.item_name }}</td>
         <td>{{ res.date }}</td>
         <td>{{ res.time_slot }}</td>
+        <td>
+          <a href="{% url 'reservations:select_office_edit' res.id %}" class="btn btn-sm btn-warning">編集</a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

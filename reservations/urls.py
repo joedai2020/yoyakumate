@@ -30,6 +30,7 @@ urlpatterns = [
 
     # # 予約関連
     path('select_office/', views.select_office, name='select_office'),
+    path('select_office/<int:reservation_id>/', views.select_office, name='select_office_edit'),
     path('select_facility/', views.select_facility, name='select_facility'),
     path('select_item/', views.select_item, name='select_item'),
     path('select_date/', views.select_date, name='select_date'),
