@@ -27,6 +27,7 @@
         <td>{{ res.time_slot }}</td>
         <td>
           <a href="{% url 'reservations:select_office_edit' res.id %}" class="btn btn-sm btn-warning">編集</a>
+          <a href="{% url 'reservations:reservation_delete' res.id %}" class="btn btn-sm btn-danger" onclick="return confirm('本当に削除しますか？');">削除</a>
         </td>
       </tr>
       {% endfor %}

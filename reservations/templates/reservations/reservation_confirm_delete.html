@@ -1,0 +1,18 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<h2>予約削除確認</h2>
+<p>以下の予約を削除してもよろしいですか？</p>
+
+<ul>
+  <li>設備: {{ reservation.facilityItem.item_name }}</li>
+  <li>日付: {{ reservation.date }}</li>
+  <li>時間: {{ reservation.start_time }} - {{ reservation.end_time }}</li>
+</ul>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">削除する</button>
+  <a href="{% url 'reservations:user_home' %}" class="btn btn-secondary">キャンセル</a>
+</form>
+{% endblock %}

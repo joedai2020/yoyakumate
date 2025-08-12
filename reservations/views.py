@@ -690,3 +690,17 @@ def reserve_confirm(request):
         'selected_date': selected_date,
         'time_slot': time_slot,
     })
+
+@login_required
+def reservation_delete(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id, user=request.user)
+
+    if request.method == 'POST':
+        reservation.delete()
+        messages.success(request, '予約を削除しました。')
+        return redirect('reservations:user_home')
+
+    # GETの場合は削除確認画面を表示
+    return render(request, 'reservations/reservation_confirm_delete.html', {
+        'reservation': reservation,
+    })
