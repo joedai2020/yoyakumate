@@ -176,10 +176,10 @@ class SelectTimeSlotForm(forms.Form):
 
 class ReservationSearchForm(forms.Form):
     name = forms.CharField(
-        label='ユーザー名',
+        label='氏名',
         max_length=100,
         required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'ユーザー名', 'class': 'form-control'})
+        widget=forms.TextInput(attrs={'placeholder': '氏名', 'class': 'form-control'})
     )
     phone = forms.CharField(
         label='電話番号',
