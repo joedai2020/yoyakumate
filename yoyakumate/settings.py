@@ -1,16 +1,17 @@
 from pathlib import Path
+import os
 
 # プロジェクトのベースディレクトリを定義（settings.py の2階層上のディレクトリ）
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Djangoの秘密鍵（本番環境では絶対に外部に漏らさないこと）
-SECRET_KEY = 'django-insecure-4-dw)p!vmzj-4zrtpl=7q-bl3^==k)$do9=71-q6ma*o$e0ffp'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-仮のキー')
 
 # デバッグモードの設定（開発中はTrue、本番ではFalseにする）
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # 許可するホスト名のリスト（テスト環境ではローカルホストを許可）
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # インストール済みアプリケーションのリスト
 INSTALLED_APPS = [
@@ -66,16 +67,16 @@ WSGI_APPLICATION = 'yoyakumate.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',  # SQLiteデータベースエンジン
-        'NAME': BASE_DIR / 'db.sqlite3',         # データベースファイルのパス
+        'NAME': '/home/site/db.sqlite3',
     }
 }
 
 # パスワードバリデーションの設定（セキュリティ強化）
 AUTH_PASSWORD_VALIDATORS = [
-    #{'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},  # 類似した属性はNG
-    #{'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},             # 最小長さ制限
-    #{'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},            # よくあるパスワード不可
-    #{'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},           # 数字のみ不可
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},  # 類似した属性はNG
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},             # 最小長さ制限
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},            # よくあるパスワード不可
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},           # 数字のみ不可
 ]
 
 # 言語コード設定（日本語）
@@ -105,7 +106,13 @@ AUTH_USER_MODEL = 'reservations.CustomUser'
 # ログイン画面のURL（認証が必要なページアクセス時のリダイレクト先）
 LOGIN_URL = '/login/'
 
-# 開発時にDjangoのデバッグページを表示するIPアドレス
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
+# セキュリティ強化設定（本番向けに）
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 3600
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
