@@ -173,3 +173,59 @@ class SelectTimeSlotForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['time_slot'].choices = time_choices
 
+
+class ReservationSearchForm(forms.Form):
+    name = forms.CharField(
+        label='ユーザー名',
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'ユーザー名', 'class': 'form-control'})
+    )
+    phone = forms.CharField(
+        label='電話番号',
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': '電話番号', 'class': 'form-control'})
+    )
+    email = forms.EmailField(
+        label='メールアドレス',
+        required=False,
+        widget=forms.EmailInput(attrs={'placeholder': 'メールアドレス', 'class': 'form-control'})
+    )
+    date_from = forms.DateField(
+        label='予約日（から）',
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+
+class UserSearchForm(forms.Form):
+    full_name = forms.CharField(
+        label='氏名',
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': '氏名', 'class': 'form-control'})
+    )
+    phone = forms.CharField(
+        label='電話番号',
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': '電話番号', 'class': 'form-control'})
+    )
+    email = forms.CharField(
+        label='メールアドレス',
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'メールアドレス', 'class': 'form-control'})
+    )
+
+class UserEditForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['full_name', 'phone', 'email', 'username', 'is_active']
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

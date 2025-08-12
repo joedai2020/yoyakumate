@@ -21,7 +21,17 @@
                 <div class="card-body text-center">
                     <h5 class="card-title">予約一覧</h5>
                     <p class="card-text">すべての予約状況を確認します。</p>
-                    
+                    <a href="{% url 'reservations:reservation_search' %}" class="btn btn-primary">確認する</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">登録ユーザー管理</h5>
+                    <p class="card-text">システムの登録ユーザーを管理します。</p>
+                    <a href="{% url 'reservations:user_manage' %}" class="btn btn-primary">管理する</a>
                 </div>
             </div>
         </div>

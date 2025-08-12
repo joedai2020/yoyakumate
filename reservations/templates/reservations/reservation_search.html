@@ -1,0 +1,71 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<style>
+thead th {
+  text-align: center;
+}
+</style>
+
+<div class="mb-3">
+    <a href="{% url 'reservations:manager_home' %}" class="btn btn-secondary">管理者ホームへ戻る</a>
+</div>
+<div class="container mt-4">
+  <h2>予約検索</h2>
+
+  <form method="get" class="row g-3 mb-4">
+    <div class="col-md-4">
+      {{ form.name.label_tag }}
+      {{ form.name }}
+    </div>
+    <div class="col-md-4">
+      {{ form.phone.label_tag }}
+      {{ form.phone }}
+    </div>
+    <div class="col-md-4">
+      {{ form.email.label_tag }}
+      {{ form.email }}
+    </div>
+    <div class="col-md-4">
+        {{ form.date_from.label_tag }}
+        {{ form.date_from }}
+    </div>
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">検索</button>
+    </div>
+  </form>
+
+  <table class="table table-bordered">
+    <thead class="table-primary">
+      <tr>
+        <th>ユーザー名</th>
+        <th>設備</th>
+        <th>予約日</th>
+        <th>利用時間</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for res in reservations %}
+      <tr>
+        <td>
+          {% if res.user %}
+            {{ res.user.full_name }}
+          {% elif res.guest %}
+            {{ res.guest.full_name }}
+          {% else %}
+            不明
+          {% endif %}
+        </td>
+        <td>{{ res.facilityItem.item_name }}</td>
+        <td>{{ res.date }}</td>
+        <td>{{ res.start_time }}～{{ res.end_time }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8" class="text-center">該当する予約がありません</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

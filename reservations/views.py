@@ -8,6 +8,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.urls import reverse
+from django.db.models import Q
 from urllib.parse import urlencode
 from .models import Reservation, FacilityItem, Facility, Reservation
 from .forms import *
@@ -214,6 +215,7 @@ def facility_delete(request, pk):
     
 #施設アイテム
 @login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def facility_item_list(request, facility_id):
     facility = get_object_or_404(Facility, id=facility_id)
     items = facility.facilityitem_set.all()  # related_name='items'
@@ -223,6 +225,7 @@ def facility_item_list(request, facility_id):
     })
 
 @login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def facility_item_create(request, facility_id):
     facility = get_object_or_404(Facility, id=facility_id)
     if request.method == 'POST':
@@ -240,6 +243,7 @@ def facility_item_create(request, facility_id):
     })
 
 @login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def facility_item_edit(request, item_id):
     item = get_object_or_404(FacilityItem, id=item_id)
     if request.method == 'POST':
@@ -255,6 +259,7 @@ def facility_item_edit(request, item_id):
     })
 
 @login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
 def facility_item_delete(request, item_id):
     item = get_object_or_404(FacilityItem, id=item_id)
     facility_id = item.facility.id
@@ -263,6 +268,90 @@ def facility_item_delete(request, item_id):
         return redirect('reservations:facility_item_list', facility_id=facility_id)
     return render(request, 'reservations/facility_item_confirm_delete.html', {
         'item': item
+    })
+
+
+@login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
+def reservation_search(request):
+    form = ReservationSearchForm(request.GET or None)
+    reservations = []
+    
+    if form.is_valid():
+        reservations = Reservation.objects.all()
+        
+        name = form.cleaned_data.get('name')
+        phone = form.cleaned_data.get('phone')
+        email = form.cleaned_data.get('email')
+
+        q_user = Q()
+        q_guest = Q()
+
+        if name:
+            q_user &= Q(user__full_name__startswith=name)
+            q_guest &= Q(guest__full_name__startswith=name)
+        if phone:
+            q_user &= Q(user__phone__startswith=phone)
+            q_guest &= Q(guest__phone__startswith=phone)
+        if email:
+            q_user &= Q(user__email__startswith=email)
+            q_guest &= Q(guest__email__startswith=email)
+
+        if any([name, phone, email]):
+            reservations = reservations.filter(q_user | q_guest)
+
+        date_from = form.cleaned_data.get('date_from')
+        
+        if date_from:
+            reservations = reservations.filter(date__gte=date_from)
+    context = {
+        'form': form,
+        'reservations': reservations,
+    }
+    return render(request, 'reservations/reservation_search.html', context)
+
+
+@login_required
+@user_passes_test(is_manager, login_url='reservations:user_home')
+def user_manage(request):
+    form = UserSearchForm(request.GET or None)
+    users = CustomUser.objects.filter(is_superuser=False).exclude(id=request.user.id) 
+
+    if form.is_valid():
+        full_name = form.cleaned_data.get('full_name')
+        phone = form.cleaned_data.get('phone')
+        email = form.cleaned_data.get('email')
+
+        if full_name:
+            users = users.filter(full_name__icontains=full_name)
+        if phone:
+            users = users.filter(phone__icontains=phone)
+        if email:
+            users = users.filter(email__icontains=email)
+
+    users = users.order_by('full_name')
+
+    return render(request, 'reservations/user_manage.html', {
+        'form': form,
+        'users': users,
+    })
+
+@login_required
+def user_edit(request, user_id):
+    user_obj = get_object_or_404(CustomUser, id=user_id, is_superuser=False)
+
+    if request.method == 'POST':
+        form = UserEditForm(request.POST, instance=user_obj)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'ユーザー情報を更新しました。')
+            return redirect('reservations:user_manage')
+    else:
+        form = UserEditForm(instance=user_obj)
+
+    return render(request, 'reservations/user_edit.html', {
+        'form': form,
+        'user_obj': user_obj,
     })
 # 設備管理終了
 

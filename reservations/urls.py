@@ -8,6 +8,10 @@ urlpatterns = [
     path('', views.root_redirect, name='root_redirect'),  # 根路径重定向
     path('manager/home/', views.manager_home, name='manager_home'),
     path('user/home/', views.user_home, name='user_home'),
+    path('users/manage/', views.user_manage, name='user_manage'),
+    path('users/edit/<int:user_id>/', views.user_edit, name='user_edit'), 
+    
+    path('reservations/search/', views.reservation_search, name='reservation_search'),
 
     # # 施設（麻将、棋牌、乒乓など）一覧・詳細
     path('facilities/', views.facility_list, name='facility_list'),

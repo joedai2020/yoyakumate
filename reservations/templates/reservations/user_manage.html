@@ -1,0 +1,57 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{% url 'reservations:manager_home' %}" class="btn btn-secondary">管理者ホームへ戻る</a>
+</div>
+<div class="container mt-4">
+    <h2>登録ユーザー管理</h2>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            {{ form.full_name.label_tag }}
+            {{ form.full_name }}
+        </div>
+        <div class="col-md-3">
+            {{ form.phone.label_tag }}
+            {{ form.phone }}
+        </div>
+        <div class="col-md-3">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">検索</button>
+        </div>
+    </form>
+
+    <table class="table table-striped">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>氏名</th>
+                <th>電話番号</th>
+                <th>メールアドレス</th>
+                <th>ユーザー名</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.phone }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.username }}</td>
+                <td class="text-center">
+                    <a href="{% url 'reservations:user_edit' user.id %}" class="btn btn-sm btn-warning">変更</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">登録ユーザーが存在しません。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
