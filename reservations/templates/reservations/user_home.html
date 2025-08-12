@@ -3,29 +3,21 @@
 {% block content %}
 <h2>マイ予約一覧</h2>
 
-{% if reservations.exists %}
+{% if reservations %}
   <table class="table table-bordered">
     <thead>
       <tr>
-        <th>管理所</th>
-        <th>施設</th>
         <th>設備</th>
         <th>日付</th>
         <th>時間</th>
-        <th>予約者</th>
-        <th>作成日時</th>
       </tr>
     </thead>
     <tbody>
       {% for res in reservations %}
       <tr>
-        <td>{{ res.management_office.name }}</td>
-        <td>{{ res.facility.name }}</td>
-        <td>{{ res.facility_item.name }}</td>
+        <td>{{ res.facility_item.item_name }}</td>
         <td>{{ res.date }}</td>
         <td>{{ res.time_slot }}</td>
-        <td>{{ res.user.username }}</td>
-        <td>{{ res.created_at|date:"Y-m-d H:i" }}</td>
       </tr>
       {% endfor %}
     </tbody>

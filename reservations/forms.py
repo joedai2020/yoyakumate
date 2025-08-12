@@ -133,7 +133,7 @@ class FacilityItemForm(forms.ModelForm):
 class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
-        fields = ['facilityItem', 'date', 'start_time', 'end_time']
+        fields = ['facilityItem', 'date', 'start_time', 'end_time', 'user', 'guest']
 
 class SelectOfficeForm(forms.Form):
     office = forms.ModelChoiceField(
@@ -172,3 +172,4 @@ class SelectTimeSlotForm(forms.Form):
         time_choices = kwargs.pop('time_choices', [])
         super().__init__(*args, **kwargs)
         self.fields['time_slot'].choices = time_choices
+

@@ -13,8 +13,7 @@ from .utils import get_timeslot_formset
 
 
 def is_manager(user):
-    return user.groups.filter(name='manager').exists()
-
+    return hasattr(user, 'managerprofile')
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -33,16 +32,28 @@ def root_redirect(request):
 @login_required
 def user_home(request):
     user = request.user
-    
-    
-    reservations = Reservation.objects.filter(user=user)
+
+    # 只取当前用户的预约
+    reservations = Reservation.objects.filter(user=user).select_related(
+        'facilityItem__facility__office',  # 管理所
+        'facilityItem__facility',                     # 施設
+        'facilityItem'                                 # 設備
+    )
+
+    # 给每条记录增加一个 time_slot 属性方便模板显示
+    for r in reservations:
+        r.time_slot = f"{r.start_time.strftime('%H:%M')} - {r.end_time.strftime('%H:%M')}"
+        r.office = r.facilityItem.facility.office
+        r.facility = r.facilityItem.facility
+        r.facility_item = r.facilityItem
+
     context = {
         'reservations': reservations,
     }
     return render(request, 'reservations/user_home.html', context)
 
 @login_required
-@user_passes_test(is_manager, login_url='reservations:user_home')
+@user_passes_test(is_manager)
 def manager_home(request):
     return render(request, 'reservations/manager_home.html')
 

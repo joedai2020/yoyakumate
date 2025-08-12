@@ -9,10 +9,6 @@ urlpatterns = [
     path('manager/home/', views.manager_home, name='manager_home'),
     path('user/home/', views.user_home, name='user_home'),
 
-    # # コミュニティ（管理所）一覧・詳細
-    # path('communities/', views.community_list, name='community_list'),
-    # path('community/<int:pk>/', views.community_detail, name='community_detail'),
-
     # # 施設（麻将、棋牌、乒乓など）一覧・詳細
     path('facilities/', views.facility_list, name='facility_list'),
     path('create/', views.facility_create, name='facility_create'),    # 施設追加

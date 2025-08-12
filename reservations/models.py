@@ -89,8 +89,8 @@ class Reservation(models.Model):
         ordering = ['-date', 'start_time']
 
     def __str__(self):
-        return f"{self.date} {self.facility} {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
-
+        facility_name = self.facilityItem.facility.name if self.facilityItem and self.facilityItem.facility else "未設定"
+        return f"{self.date} {facility_name} {self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')}"
     
     
 class InvitationCode(models.Model):
