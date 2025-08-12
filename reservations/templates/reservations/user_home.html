@@ -1,11 +1,17 @@
 {% extends 'reservations/base.html' %}
 
 {% block content %}
+<style>
+  thead th {
+    text-align: center;
+    background-color: #dceeff; /* 淡蓝色背景 */
+  }
+</style>
 <h2>マイ予約一覧</h2>
 
 {% if reservations %}
   <table class="table table-bordered">
-    <thead>
+    <thead class="table-primary">
       <tr>
         <th>設備</th>
         <th>日付</th>

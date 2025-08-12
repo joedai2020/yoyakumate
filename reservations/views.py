@@ -21,7 +21,6 @@ def is_manager(user):
 def root_redirect(request):
     if request.user.is_authenticated:
         try:
-            # 如果存在 ManagerProfile，则是管理者
             if hasattr(request.user, 'managerprofile'):
                 return redirect('reservations:manager_home')
             else:
@@ -35,15 +34,19 @@ def root_redirect(request):
 @login_required
 def user_home(request):
     user = request.user
+    now = timezone.now()
 
-    # 只取当前用户的预约
-    reservations = Reservation.objects.filter(user=user).select_related(
-        'facilityItem__facility__office',  # 管理所
-        'facilityItem__facility',                     # 施設
-        'facilityItem'                                 # 設備
+    reservations = Reservation.objects.filter(
+        user=user
+    ).filter(
+        Q(date__gt=now.date()) |
+        Q(date=now.date(), end_time__gt=now.time())
+    ).select_related(
+        'facilityItem__facility__office',
+        'facilityItem__facility',
+        'facilityItem'
     )
 
-    # 给每条记录增加一个 time_slot 属性方便模板显示
     for r in reservations:
         r.time_slot = f"{r.start_time.strftime('%H:%M')} - {r.end_time.strftime('%H:%M')}"
         r.office = r.facilityItem.facility.office
