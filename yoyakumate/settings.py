@@ -11,7 +11,11 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-仮のキー')
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # 許可するホスト名のリスト（テスト環境ではローカルホストを許可）
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'yoyakumate-a7fzbyf9c9acdnes.japanwest-01.azurewebsites.net',
+]
 
 # インストール済みアプリケーションのリスト
 INSTALLED_APPS = [
