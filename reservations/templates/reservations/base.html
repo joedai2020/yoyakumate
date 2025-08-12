@@ -146,7 +146,12 @@
 
                 {% if user.is_authenticated %}
                     <li class="nav-item me-2">
-                        <span class="nav-link fw-bold">こんにちは、{{ user.username }} さん</span>
+                        
+                    {% if now_hour >= 18 or now_hour < 5 %}
+                        <span class="nav-link fw-bold">こんばんは、{{ user.full_name }} さん</span>
+                    {% else %}
+                        <span class="nav-link fw-bold">こんにちは、{{ user.full_name }} さん</span>
+                    {% endif %}
                     </li>
                     <li class="nav-item">
                         <a href="{% url 'reservations:logout' %}" class="nav-link fw-bold">ログアウト</a>

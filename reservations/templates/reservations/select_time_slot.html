@@ -5,6 +5,8 @@
 <form method="post">
   {% csrf_token %}
   {{ form.as_p }}
+  {% if not messages %}
   <button type="submit">次へ</button>
+  {% endif %}
 </form>
 {% endblock %}

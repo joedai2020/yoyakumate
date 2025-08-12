@@ -1,12 +1,14 @@
+import pytz, datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib import messages
-from datetime import date, timedelta
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ObjectDoesNotExist
-import datetime
+from django.utils import timezone
+from django.urls import reverse
+from urllib.parse import urlencode
 from .models import Reservation, FacilityItem, Facility, Reservation
 from .forms import *
 from .utils import get_timeslot_formset, clear_reservation_session
@@ -90,23 +92,33 @@ def register(request):
 def login_view(request):
     
     # すでにログインしている場合はホームにリダイレクト
+    jst = pytz.timezone('Asia/Tokyo')
+    now_jst = timezone.now().astimezone(jst)
+    now_hour = now_jst.hour
+    params = {'now_hour': now_hour}
+    
     if request.user.is_authenticated:
         if hasattr(request.user, 'managerprofile'):
-            return redirect('reservations:manager_home')
+            
+            url = reverse('reservations:manager_home') + '?' + urlencode(params)
+            return redirect(url)
         else:
-            return redirect('reservations:user_home')
+            url = reverse('reservations:user_home') + '?' + urlencode(params)
+            return redirect(url)
 
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-
+            
             # 判断是否是管理者
             if hasattr(user, 'managerprofile'):
-                return render(request, 'reservations/manager_home.html')
+                return render(request, 'reservations/manager_home.html', {'now_hour': now_hour})
             else:
-                return redirect('reservations:user_home')
+                params = {'now_hour': now_hour}
+                url = reverse('reservations:user_home') + '?' + urlencode(params)
+                return redirect(url)
         else:
             messages.error(request, 'ユーザー名かパスワードが正しくありません。')
     else:
@@ -412,12 +424,40 @@ def select_time_slot(request):
         return redirect('reservations:select_date')
 
     item = FacilityItem.objects.get(id=item_id)
-    # 施設に紐づく時間帯を取得
-    time_slots = FacilityTimeSlot.objects.filter(facility=item.facility).order_by('start_time')
+
+    # その日、その施設で予約済みの時間帯IDを取得
+    reserved_time_slot_ids = Reservation.objects.filter(
+        facilityItem__facility=item.facility,
+        date=selected_date
+    ).values_list('start_time', flat=True)
+
+    # 予約済み時間帯のstart_timeに該当するFacilityTimeSlotのIDを取得する必要があるため、
+    # FacilityTimeSlotのstart_time と予約済みstart_time をマッチングさせてIDを取得する処理を作成する。
+    # ここでは簡単に先にFacilityTimeSlotの全件を取得し、予約済みのstart_timeにマッチするものは除外します。
+
+    all_time_slots = FacilityTimeSlot.objects.filter(facility=item.facility).order_by('start_time')
+
+    # 予約済みのstart_timeをセットにする
+    reserved_start_times = set(Reservation.objects.filter(
+        facilityItem__facility=item.facility,
+        date=selected_date
+    ).values_list('start_time', flat=True))
+
+    # 予約済み時間帯を除外した時間帯リスト
+    available_time_slots = [ts for ts in all_time_slots if ts.start_time not in reserved_start_times]
+
+    all_time_slots = FacilityTimeSlot.objects.filter(facility=item.facility).order_by('start_time')
+
+    available_time_slots = [ts for ts in all_time_slots if ts.start_time not in reserved_start_times]
+
+    # 予約済みの件数メッセージ表示
+    reserved_count = len(all_time_slots) - len(available_time_slots)
+    if reserved_count > 0:
+        messages.info(request, f"{reserved_count}件の時間帯はすでに予約されています。")
 
     time_choices = [
         (str(ts.id), f"{ts.start_time.strftime('%H:%M')} - {ts.end_time.strftime('%H:%M')}")
-        for ts in time_slots
+        for ts in available_time_slots
     ]
 
     if request.method == 'POST':
@@ -426,7 +466,6 @@ def select_time_slot(request):
             request.session['selected_time_slot'] = form.cleaned_data['time_slot']
             return redirect('reservations:reserve_confirm')
     else:
-        # セッションに保存済みの時間帯があれば初期値としてセット
         initial_time_slot = request.session.get('selected_time_slot')
         if initial_time_slot:
             form = SelectTimeSlotForm(time_choices=time_choices, initial={'time_slot': initial_time_slot})
@@ -453,18 +492,38 @@ def reserve_confirm(request):
     time_slot = FacilityTimeSlot.objects.get(id=time_slot_id)
 
     if request.method == 'POST':
-        Reservation.objects.create(
+        
+        # 予約済みチェック
+        already_reserved = Reservation.objects.filter(
             facilityItem=item,
             date=selected_date,
             start_time=time_slot.start_time,
-            end_time=time_slot.end_time,
-            user=request.user
-        )
-        # セッションをクリア
-        for key in ['selected_office', 'selected_facility', 'selected_item', 'selected_date', 'selected_time_slot']:
-            request.session.pop(key, None)
+            end_time=time_slot.end_time
+        ).exists()
 
-        return redirect('reservations:select_office')
+        if already_reserved:
+            error = '選択された日時は既に予約されています。別の時間帯または設備を選択してください。'
+
+            return render(request, 'reservations/reserve_confirm.html', {
+                'office': office,
+                'facility': facility,
+                'item': item,
+                'selected_date': selected_date,
+                'time_slot': time_slot,
+                'error': error,
+            })
+        else:
+            Reservation.objects.create(
+                facilityItem=item,
+                date=selected_date,
+                start_time=time_slot.start_time,
+                end_time=time_slot.end_time,
+                user=request.user
+            )
+            # セッションをクリア
+            clear_reservation_session(request)
+
+        return redirect('reservations:user_home')
 
     return render(request, 'reservations/reserve_confirm.html', {
         'office': office,
