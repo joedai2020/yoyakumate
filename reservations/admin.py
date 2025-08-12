@@ -51,8 +51,8 @@ class TemporaryReservationUserAdmin(admin.ModelAdmin):
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    list_display = ('facility', 'date', 'start_time', 'end_time', 'user', 'guest', 'created_at')
-    list_filter = ('facility', 'date')
+    list_display = ('facilityItem', 'date', 'start_time', 'end_time', 'user', 'guest', 'created_at')
+    list_filter = ('facilityItem', 'date')
     search_fields = ('user__username', 'guest__full_name')
 
 @admin.register(InvitationCode)

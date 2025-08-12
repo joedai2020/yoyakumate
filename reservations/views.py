@@ -1,18 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib import messages
-from django.utils import timezone
+from datetime import date, timedelta
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_protect
-from django.utils.dateparse import parse_date
-from .models import Reservation, FacilityTimeSlot, TemporaryReservationUser, FacilityItem
-from .forms import UserRegisterForm, AdminRegisterForm, FacilityForm, FacilityItemForm
-from .models import Facility, Reservation, ManagementOffice, FacilityTimeSlot
+import datetime
+from .models import Reservation, FacilityItem, Facility, Reservation
+from .forms import *
 from .utils import get_timeslot_formset
 
 
@@ -37,6 +33,8 @@ def root_redirect(request):
 @login_required
 def user_home(request):
     user = request.user
+    
+    
     reservations = Reservation.objects.filter(user=user)
     context = {
         'reservations': reservations,
@@ -266,99 +264,148 @@ def reservation_list(request):
         'reservations': reservations,
     })
 
-def api_facilities(request):
-    # 管理所IDをGETパラメータから取得
-    office_id = request.GET.get('office_id')
+
+# Step 1: 
+# 1. 管理所選択
+@login_required
+def select_office(request):
+    offices = ManagementOffice.objects.all()
+
+    if request.method == 'POST':
+        office_id = request.POST.get('office_id')
+        if offices.filter(id=office_id).exists():
+            request.session['selected_office'] = office_id
+            return redirect('reservations:select_facility')
+        else:
+            error = '有効な管理所を選択してください。'
+            return render(request, 'reservations/select_office.html', {'offices': offices, 'error': error})
+
+    return render(request, 'reservations/select_office.html', {'offices': offices})
+
+# 2. 施設タイプ選択
+@login_required
+def select_facility(request):
+    office_id = request.session.get('selected_office')
     if not office_id:
-        return JsonResponse({'facilities': []})
+        return redirect('reservations:select_office')
 
-    # 指定管理所の設備一覧を取得
-    facilities = Facility.objects.filter(office_id=office_id).order_by('name')
-    
-    result = []
-    for facility in facilities:
-        items = FacilityItem.objects.filter(facility=facility).values('id', 'item_name').order_by('item_name')
-        result.append({
-            'facility_id': facility.id,
-            'facility_name': facility.name,
-            'items': list(items)
-        })
-    
-    return JsonResponse({'facilities': result})
+    facilities = Facility.objects.filter(office_id=office_id)
 
-def api_time_slots(request):
-    facility_item_id = request.GET.get('facility_item_id')
-    if not facility_item_id:
-        return JsonResponse({'time_slots': []})
+    if request.method == 'POST':
+        facility_id = request.POST.get('facility_id')
+        if facilities.filter(id=facility_id).exists():
+            request.session['selected_facility'] = facility_id
+            return redirect('reservations:select_item')
+        else:
+            error = '有効な施設タイプを選択してください。'
+            return render(request, 'reservations/select_facility.html', {'facilities': facilities, 'error': error})
 
-    slots = FacilityTimeSlot.objects.filter(facility_item_id=facility_item_id)
-    time_slots_list = [{
-        'id': slot.id,
-        'label': f"{slot.start_time.strftime('%H:%M')} - {slot.end_time.strftime('%H:%M')}"
-    } for slot in slots]
+    return render(request, 'reservations/select_facility.html', {'facilities': facilities})
 
-    return JsonResponse({'time_slots': time_slots_list})
+# 3. 具体的な設備選択
+@login_required
+def select_item(request):
+    facility_id = request.session.get('selected_facility')
+    if not facility_id:
+        return redirect('reservations:select_facility')
 
-@require_POST
-@csrf_protect  # CSRFトークン検証を有効化
-def create_reservation(request):
-    # POSTデータ取得
-    facility_id = request.POST.get('facility_id')
-    date_str = request.POST.get('date')
-    time_slot_id = request.POST.get('time_slot_id')
+    items = FacilityItem.objects.filter(facility_id=facility_id)
 
-    # バリデーション: 必須パラメータチェック
-    if not (facility_id and date_str and time_slot_id):
-        return JsonResponse({'status': 'error', 'message': '必要なパラメータが不足しています。'}, status=400)
+    if request.method == 'POST':
+        item_id = request.POST.get('item_id')
+        if items.filter(id=item_id).exists():
+            request.session['selected_item'] = item_id
+            return redirect('reservations:select_date')
+        else:
+            error = '有効な設備を選択してください。'
+            return render(request, 'reservations/select_item.html', {'items': items, 'error': error})
 
-    # 日付フォーマットチェック
-    date = parse_date(date_str)
-    if date is None:
-        return JsonResponse({'status': 'error', 'message': '予約日の日付形式が不正です。'}, status=400)
+    return render(request, 'reservations/select_item.html', {'items': items})
 
-    # 過去日付予約不可チェック（現在日付と比較）
-    from django.utils.timezone import localdate
-    today = localdate()
-    if date < today:
-        return JsonResponse({'status': 'error', 'message': '過去の日付には予約できません。'}, status=400)
+# 4. 日付選択
+@login_required
+def select_date(request):
+    if not request.session.get('selected_item'):
+        return redirect('reservations:select_item')
 
-    # FacilityTimeSlotを取得
-    try:
-        time_slot = FacilityTimeSlot.objects.get(id=time_slot_id, facility_id=facility_id)
-    except FacilityTimeSlot.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': '指定された時間帯が存在しません。'}, status=404)
-
-    # ログインユーザー判定
-    if request.user.is_authenticated:
-        user = request.user
-        guest = None
+    if request.method == 'POST':
+        form = SelectDateForm(request.POST)
+        if form.is_valid():
+            date = form.cleaned_data['date']
+            today = datetime.date.today()
+            if date < today:
+                error = '過去の日付は選択できません。'
+                return render(request, 'reservations/select_date.html', {'form': form, 'error': error})
+            request.session['selected_date'] = str(date)
+            return redirect('reservations:select_time_slot')
     else:
-        # 非登録ユーザー処理
-        # 例としてメールアドレスをPOSTから受け取り一時ユーザー作成 or 取得
-        guest_email = request.POST.get('guest_email')
-        if not guest_email:
-            return JsonResponse({'status': 'error', 'message': '非登録ユーザーはメールアドレスが必要です。'}, status=400)
-        guest, created = TemporaryReservationUser.objects.get_or_create(email=guest_email)
-        user = None
+        form = SelectDateForm()
 
-    # 予約重複チェック（同施設・同日・同時間帯）
-    exists = Reservation.objects.filter(
-        facility_id=facility_id,
-        date=date,
-        start_time=time_slot.start_time,
-        end_time=time_slot.end_time,
-    ).exists()
-    if exists:
-        return JsonResponse({'status': 'error', 'message': '同じ時間帯の予約がすでに存在します。'}, status=400)
+    return render(request, 'reservations/select_date.html', {'form': form})
 
-    # 予約を作成
-    reservation = Reservation.objects.create(
-        facility_id=facility_id,
-        date=date,
-        start_time=time_slot.start_time,
-        end_time=time_slot.end_time,
-        user=user,
-        guest=guest,
-    )
+# 5. 時間帯選択
+@login_required
+def select_time_slot(request):
+    item_id = request.session.get('selected_item')
+    selected_date = request.session.get('selected_date')
 
-    return JsonResponse({'status': 'success', 'reservation_id': reservation.id})
+    if not (item_id and selected_date):
+        return redirect('reservations:select_date')
+
+    item = FacilityItem.objects.get(id=item_id)
+    # 施設に紐づく時間帯を取得
+    time_slots = FacilityTimeSlot.objects.filter(facility=item.facility).order_by('start_time')
+
+    time_choices = [
+        (str(ts.id), f"{ts.start_time.strftime('%H:%M')} - {ts.end_time.strftime('%H:%M')}")
+        for ts in time_slots
+    ]
+
+    if request.method == 'POST':
+        form = SelectTimeSlotForm(request.POST, time_choices=time_choices)
+        if form.is_valid():
+            request.session['selected_time_slot'] = form.cleaned_data['time_slot']
+            return redirect('reservations:reserve_confirm')
+    else:
+        form = SelectTimeSlotForm(time_choices=time_choices)
+
+    return render(request, 'reservations/select_time_slot.html', {'form': form})
+
+# 6. 予約確認・保存
+@login_required
+def reserve_confirm(request):
+    office_id = request.session.get('selected_office')
+    facility_id = request.session.get('selected_facility')
+    item_id = request.session.get('selected_item')
+    selected_date = request.session.get('selected_date')
+    time_slot_id = request.session.get('selected_time_slot')
+
+    if not all([office_id, facility_id, item_id, selected_date, time_slot_id]):
+        return redirect('reservations:select_office')
+
+    office = ManagementOffice.objects.get(id=office_id)
+    facility = Facility.objects.get(id=facility_id)
+    item = FacilityItem.objects.get(id=item_id)
+    time_slot = FacilityTimeSlot.objects.get(id=time_slot_id)
+
+    if request.method == 'POST':
+        Reservation.objects.create(
+            facilityItem=item,
+            date=selected_date,
+            start_time=time_slot.start_time,
+            end_time=time_slot.end_time,
+            user=request.user
+        )
+        # セッションをクリア
+        for key in ['selected_office', 'selected_facility', 'selected_item', 'selected_date', 'selected_time_slot']:
+            request.session.pop(key, None)
+
+        return redirect('reservations:select_office')
+
+    return render(request, 'reservations/reserve_confirm.html', {
+        'office': office,
+        'facility': facility,
+        'item': item,
+        'selected_date': selected_date,
+        'time_slot': time_slot,
+    })

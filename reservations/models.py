@@ -73,7 +73,7 @@ class TemporaryReservationUser(models.Model):
 
 # 予約モデル（登録・非登録ユーザー共通）
 class Reservation(models.Model):
-    facility = models.ForeignKey('Facility', on_delete=models.CASCADE, verbose_name="施設")
+    facilityItem = models.ForeignKey(FacilityItem, on_delete=models.CASCADE, null=True, blank=True,verbose_name="施設")
     date = models.DateField(verbose_name="予約日")
     start_time = models.TimeField(verbose_name="開始時間")
     end_time = models.TimeField(verbose_name="終了時間")

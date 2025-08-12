@@ -29,10 +29,12 @@ urlpatterns = [
     # path('schedule/<int:pk>/', views.schedule_detail, name='schedule_detail'),
 
     # # 予約関連
-    path('reservation/list/', views.reservation_list, name='reservation_list'),
-    path('api/facilities/', views.api_facilities, name='api_facilities'),
-    path('api/time_slots/', views.api_time_slots, name='api_time_slots'),
-    path('reservations/create/', views.create_reservation, name='create_reservation'),
+    path('select_office/', views.select_office, name='select_office'),
+    path('select_facility/', views.select_facility, name='select_facility'),
+    path('select_item/', views.select_item, name='select_item'),
+    path('select_date/', views.select_date, name='select_date'),
+    path('select_time_slot/', views.select_time_slot, name='select_time_slot'),
+    path('reserve_confirm/', views.reserve_confirm, name='reserve_confirm'),
 
     # # ユーザー登録・ログイン
     path('register/', views.register, name='register'),

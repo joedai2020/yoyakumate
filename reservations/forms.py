@@ -2,7 +2,8 @@ from django import forms
 from django.forms.models import BaseInlineFormSet
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
-from .models import CustomUser, InvitationCode, Facility, FacilityTimeSlot, ManagerProfile, FacilityItem
+from datetime import date, timedelta
+from .models import CustomUser, ManagementOffice, InvitationCode, Facility, FacilityTimeSlot, ManagerProfile, FacilityItem,Reservation
 
 # 一般用户登録フォーム
 class UserRegisterForm(UserCreationForm):
@@ -127,3 +128,47 @@ class FacilityItemForm(forms.ModelForm):
     class Meta:
         model = FacilityItem
         fields = ['item_name', 'description']
+        
+        
+class ReservationForm(forms.ModelForm):
+    class Meta:
+        model = Reservation
+        fields = ['facilityItem', 'date', 'start_time', 'end_time']
+
+class SelectOfficeForm(forms.Form):
+    office = forms.ModelChoiceField(
+        queryset=ManagementOffice.objects.all(),
+        label="管理所を選択してください"
+    )
+
+class SelectFacilityForm(forms.Form):
+    facility = forms.ModelChoiceField(
+        queryset=Facility.objects.none(),
+        label="施設を選択してください"
+    )
+
+class SelectDateForm(forms.Form):
+    date = forms.DateField(
+        label="日付を選択してください",
+        widget=forms.DateInput(attrs={"type": "date"})
+    )
+
+    def clean_date(self):
+        selected_date = self.cleaned_data['date']
+        today = date.today()
+        max_date = today + timedelta(days=6)  # 包含今天，一共7天
+
+        if not (today <= selected_date <= max_date):
+            raise ValidationError('選択できる日付は今日から1週間以内です。')
+        return selected_date
+
+class SelectTimeSlotForm(forms.Form):
+    time_slot = forms.ChoiceField(
+        choices=[],
+        label="時間帯を選択してください"
+    )
+
+    def __init__(self, *args, **kwargs):
+        time_choices = kwargs.pop('time_choices', [])
+        super().__init__(*args, **kwargs)
+        self.fields['time_slot'].choices = time_choices

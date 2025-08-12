@@ -4,14 +4,35 @@
 <h2>マイ予約一覧</h2>
 
 {% if reservations.exists %}
-  <ul>
-  {% for res in reservations %}
-    <li>{{ res.facility_item }} - {{ res.date }} {{ res.time_slot }}</li>
-  {% endfor %}
-  </ul>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>管理所</th>
+        <th>施設</th>
+        <th>設備</th>
+        <th>日付</th>
+        <th>時間</th>
+        <th>予約者</th>
+        <th>作成日時</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for res in reservations %}
+      <tr>
+        <td>{{ res.management_office.name }}</td>
+        <td>{{ res.facility.name }}</td>
+        <td>{{ res.facility_item.name }}</td>
+        <td>{{ res.date }}</td>
+        <td>{{ res.time_slot }}</td>
+        <td>{{ res.user.username }}</td>
+        <td>{{ res.created_at|date:"Y-m-d H:i" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% else %}
   <p>まだ予約がありません。</p>
-  <a href="{% url 'reservations:create_reservation' %}" class="btn btn-primary">新しい予約を作成</a>
+  <a href="{% url 'reservations:select_office' %}" class="btn btn-primary">新しい予約を作成</a>
 {% endif %}
 
 {% endblock %}
