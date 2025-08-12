@@ -1,5 +1,6 @@
 {% extends 'reservations/base.html' %}
 {% block content %}
+<a href="{% url 'reservations:select_facility' %}">← 施設タイプ選択に戻る</a>
 <h2>具体的な設備を選択してください</h2>
 {% if error %}
   <p style="color:red;">{{ error }}</p>
@@ -8,11 +9,11 @@
   {% csrf_token %}
   {% for item in items %}
     <div>
-      <input type="radio" id="item{{ item.id }}" name="item_id" value="{{ item.id }}">
+     <input type="radio" id="item{{ item.id }}" name="item_id" value="{{ item.id }}"
+      {% if item.id == selected_item %}checked{% endif %}>
       <label for="item{{ item.id }}">{{ item.item_name }}</label>
     </div>
   {% endfor %}
   <button type="submit">次へ</button>
 </form>
-<a href="{% url 'reservations:select_facility' %}">← 施設タイプ選択に戻る</a>
 {% endblock %}

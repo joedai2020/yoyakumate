@@ -4,10 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.urls import path, reverse
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import (
-    CustomUser, ManagementOffice, Facility, ManagerProfile,
-    TemporaryReservationUser, Reservation, InvitationCode
-)
+from .models import *
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -33,11 +30,13 @@ class ManagementOfficeAdmin(admin.ModelAdmin):
     list_display = ('name', 'address')
     search_fields = ('name', 'address')
 
+class FacilityTimeSlotInline(admin.TabularInline):
+    model = FacilityTimeSlot
+    extra = 1
+
 @admin.register(Facility)
 class FacilityAdmin(admin.ModelAdmin):
-    list_display = ('name', 'office')
-    list_filter = ('office',)
-    search_fields = ('name',)
+    inlines = [FacilityTimeSlotInline]
 
 @admin.register(ManagerProfile)
 class ManagerProfileAdmin(admin.ModelAdmin):

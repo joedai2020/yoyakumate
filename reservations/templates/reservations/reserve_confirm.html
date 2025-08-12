@@ -1,5 +1,6 @@
 {% extends 'reservations/base.html' %}
 {% block content %}
+<a href="{% url 'reservations:select_time_slot' %}">← 時間帯選択に戻る</a>
 <h2>予約内容確認</h2>
 <p>管理所: {{ office.name }}</p>
 <p>施設タイプ: {{ facility.name }}</p>
@@ -10,5 +11,4 @@
   {% csrf_token %}
   <button type="submit">予約確定</button>
 </form>
-<a href="{% url 'reservations:select_time_slot' %}">← 時間帯選択に戻る</a>
 {% endblock %}

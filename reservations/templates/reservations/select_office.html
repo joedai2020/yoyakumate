@@ -1,5 +1,6 @@
 {% extends 'reservations/base.html' %}
 {% block content %}
+<a href="{% url 'reservations:user_home' %}" >ユーザーホームに戻る</a>
 <h2>管理所を選択してください</h2>
 {% if error %}
   <p style="color:red;">{{ error }}</p>

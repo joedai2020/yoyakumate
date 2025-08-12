@@ -156,7 +156,7 @@ class SelectDateForm(forms.Form):
     def clean_date(self):
         selected_date = self.cleaned_data['date']
         today = date.today()
-        max_date = today + timedelta(days=6)  # 包含今天，一共7天
+        max_date = today + timedelta(days=6)
 
         if not (today <= selected_date <= max_date):
             raise ValidationError('選択できる日付は今日から1週間以内です。')

@@ -2,18 +2,18 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>施設一覧</h2>
+    <h2>施設種類一覧</h2>
 
-    <!-- 施設タイプ追加ボタン -->
+    <!-- 施設種類追加ボタン -->
     <div class="mb-3">
-        <a href="{% url 'reservations:facility_create' %}" class="btn btn-success">施設タイプを追加</a>
+        <a href="{% url 'reservations:facility_create' %}" class="btn btn-success">施設種類追加</a>
         <a href="{% url 'reservations:manager_home' %}" class="btn btn-secondary">管理者ホームへ戻る</a>
     </div>
 
     <table class="table table-striped mt-3">
         <thead>
             <tr>
-                <th>施設タイプ</th>
+                <th>施設種類</th>
                 <th>設備数</th>
                 <th></th>
             </tr>
@@ -29,9 +29,9 @@
 
                 <!-- 編集・削除ボタン -->
                 <td>
-                    <a href="{% url 'reservations:facility_item_list' facility.id %}" class="btn btn-sm btn-info">施設追加</a>
                     <a href="{% url 'reservations:facility_edit' facility.id %}" class="btn btn-sm btn-primary">編集</a>
                     <a href="{% url 'reservations:facility_delete' facility.id %}" class="btn btn-sm btn-danger">削除</a>
+                    <a href="{% url 'reservations:facility_item_list' facility.id %}" class="btn btn-sm btn-info">施設追加</a>
                 </td>
             </tr>
             {% empty %}

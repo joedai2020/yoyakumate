@@ -9,7 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 import datetime
 from .models import Reservation, FacilityItem, Facility, Reservation
 from .forms import *
-from .utils import get_timeslot_formset
+from .utils import get_timeslot_formset, clear_reservation_session
 
 
 def is_manager(user):
@@ -280,7 +280,15 @@ def reservation_list(request):
 # 1. 管理所選択
 @login_required
 def select_office(request):
+
+    # セッションクリア    
+    clear_reservation_session(request)
+
     offices = ManagementOffice.objects.all()
+    
+    if offices.count() == 1:
+        request.session['selected_office'] = offices.first().id
+        return redirect('reservations:select_facility')
 
     if request.method == 'POST':
         office_id = request.POST.get('office_id')
@@ -296,10 +304,17 @@ def select_office(request):
 # 2. 施設タイプ選択
 @login_required
 def select_facility(request):
+    
+    offices = ManagementOffice.objects.all()
+    single_office = (offices.count() == 1)
+    
     office_id = request.session.get('selected_office')
+    
     if not office_id:
         return redirect('reservations:select_office')
 
+    selected_facility = request.session.get('selected_facility')
+    
     facilities = Facility.objects.filter(office_id=office_id)
 
     if request.method == 'POST':
@@ -311,12 +326,18 @@ def select_facility(request):
             error = '有効な施設タイプを選択してください。'
             return render(request, 'reservations/select_facility.html', {'facilities': facilities, 'error': error})
 
-    return render(request, 'reservations/select_facility.html', {'facilities': facilities})
+    context = {
+        'facilities': facilities,
+        'single_office': single_office,
+        'selected_facility': int(selected_facility) if selected_facility else None,
+    }
+    return render(request, 'reservations/select_facility.html', context)
 
 # 3. 具体的な設備選択
 @login_required
 def select_item(request):
     facility_id = request.session.get('selected_facility')
+    selected_item = request.session.get('selected_item')
     if not facility_id:
         return redirect('reservations:select_facility')
 
@@ -331,7 +352,11 @@ def select_item(request):
             error = '有効な設備を選択してください。'
             return render(request, 'reservations/select_item.html', {'items': items, 'error': error})
 
-    return render(request, 'reservations/select_item.html', {'items': items})
+    context = {
+        'items': items,
+        'selected_item': int(selected_item) if selected_item else None,
+    }
+    return render(request, 'reservations/select_item.html', context)
 
 # 4. 日付選択
 @login_required
@@ -339,20 +364,43 @@ def select_date(request):
     if not request.session.get('selected_item'):
         return redirect('reservations:select_item')
 
+    today = datetime.date.today()
+    max_date = today + datetime.timedelta(days=6)
+
     if request.method == 'POST':
         form = SelectDateForm(request.POST)
         if form.is_valid():
-            date = form.cleaned_data['date']
-            today = datetime.date.today()
-            if date < today:
+            selected_date = form.cleaned_data['date']
+            if selected_date < today:
                 error = '過去の日付は選択できません。'
-                return render(request, 'reservations/select_date.html', {'form': form, 'error': error})
-            request.session['selected_date'] = str(date)
+                return render(request, 'reservations/select_date.html', {
+                    'form': form,
+                    'error': error,
+                    'min_date': today.isoformat(),
+                    'max_date': max_date.isoformat(),
+                })
+            if selected_date > max_date:
+                error = '選択できるのは今日から1週間以内の日付です。'
+                return render(request, 'reservations/select_date.html', {
+                    'form': form,
+                    'error': error,
+                    'min_date': today.isoformat(),
+                    'max_date': max_date.isoformat(),
+                })
+            request.session['selected_date'] = str(selected_date)
             return redirect('reservations:select_time_slot')
     else:
-        form = SelectDateForm()
+        initial_date = request.session.get('selected_date')
+        if initial_date:
+            form = SelectDateForm(initial={'date': initial_date})
+        else:
+            form = SelectDateForm()
 
-    return render(request, 'reservations/select_date.html', {'form': form})
+    return render(request, 'reservations/select_date.html', {
+        'form': form,
+        'min_date': today.isoformat(),
+        'max_date': max_date.isoformat(),
+    })
 
 # 5. 時間帯選択
 @login_required
@@ -378,7 +426,12 @@ def select_time_slot(request):
             request.session['selected_time_slot'] = form.cleaned_data['time_slot']
             return redirect('reservations:reserve_confirm')
     else:
-        form = SelectTimeSlotForm(time_choices=time_choices)
+        # セッションに保存済みの時間帯があれば初期値としてセット
+        initial_time_slot = request.session.get('selected_time_slot')
+        if initial_time_slot:
+            form = SelectTimeSlotForm(time_choices=time_choices, initial={'time_slot': initial_time_slot})
+        else:
+            form = SelectTimeSlotForm(time_choices=time_choices)
 
     return render(request, 'reservations/select_time_slot.html', {'form': form})
 

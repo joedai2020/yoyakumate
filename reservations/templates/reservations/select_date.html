@@ -1,5 +1,6 @@
 {% extends 'reservations/base.html' %}
 {% block content %}
+<a href="{% url 'reservations:select_item' %}">← 具体設備選択に戻る</a>
 <h2>予約日を選択してください</h2>
 {% if error %}
   <p style="color:red;">{{ error }}</p>
@@ -9,5 +10,15 @@
   {{ form.as_p }}
   <button type="submit">次へ</button>
 </form>
-<a href="{% url 'reservations:select_item' %}">← 具体設備選択に戻る</a>
+<script>
+  const dateInput = document.querySelector('input[type="date"]');
+  if (dateInput) {
+    dateInput.min = "{{ min_date }}";
+    dateInput.max = "{{ max_date }}";
+  }
+</script>
+
+{% if error %}
+  <p style="color:red;">{{ error }}</p>
+{% endif %}
 {% endblock %}

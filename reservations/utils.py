@@ -10,3 +10,8 @@ def get_timeslot_formset(extra=5, can_delete=True):
         extra=extra,
         can_delete=can_delete
     )
+
+def clear_reservation_session(request):
+    keys = ['selected_office', 'selected_facility', 'selected_item', 'selected_date', 'selected_time_slot']
+    for key in keys:
+        request.session.pop(key, None)
