@@ -2,6 +2,9 @@ from django.forms import inlineformset_factory
 from .models import Facility, FacilityTimeSlot
 from .forms import FacilityTimeSlotForm,FacilityTimeSlotFormSet
 
+def is_manager(user):
+    return hasattr(user, 'managerprofile')
+
 def get_timeslot_formset(extra=5, can_delete=True):
     return inlineformset_factory(
         Facility, FacilityTimeSlot,
