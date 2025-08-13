@@ -112,6 +112,8 @@ LOGIN_URL = '/login/'
 
 # セキュリティ強化設定（本番向けに）
 if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
