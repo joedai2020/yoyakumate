@@ -8,7 +8,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-仮のキー')
 
 # デバッグモードの設定（開発中はTrue、本番ではFalseにする）
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
+# DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = True
 
 # 許可するホスト名のリスト（テスト環境ではローカルホストを許可）
 ALLOWED_HOSTS = [
@@ -39,6 +40,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',        # セキュリティ関連の処理
     'django.contrib.sessions.middleware.SessionMiddleware', # セッション管理
     'django.middleware.common.CommonMiddleware',            # 共通処理（リクエストの正規化など）
+    'yoyakumate.middleware.log_exception.ExceptionLoggingMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',            # CSRF攻撃防止
     'django.contrib.auth.middleware.AuthenticationMiddleware', # 認証情報管理
     'django.contrib.messages.middleware.MessageMiddleware', # メッセージ管理
@@ -109,6 +111,48 @@ AUTH_USER_MODEL = 'reservations.CustomUser'
 
 # ログイン画面のURL（認証が必要なページアクセス時のリダイレクト先）
 LOGIN_URL = '/login/'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # 既存のロガーを無効にしない
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',  # 詳細なログ形式
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',  # 簡易ログ形式
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',  # コンソール出力用
+            'formatter': 'simple',
+        },
+        'file': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',  # 日次ローテーションファイル出力
+            'filename': '/home/LogFiles/django.log',  # ログファイルの保存先
+            'when': 'D',               # 日単位でローテーション
+            'interval': 1,             # 毎日1回ローテーション
+            'backupCount': 7,          # 最大7日分のログを保持
+            'encoding': 'utf-8',       # 文字化け防止（日本語対応）
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],  # Django関連のログを出力
+            'level': 'INFO',                  # INFO以上のログを記録
+            'propagate': True,
+        },
+        'reservations': {
+            'handlers': ['console', 'file'],  # reservationsアプリ専用のログ
+            'level': 'DEBUG',                 # DEBUG以上のログを記録
+            'propagate': False,
+        },
+    },
+}
 
 # セキュリティ強化設定（本番向けに）
 if not DEBUG:
