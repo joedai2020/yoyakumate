@@ -8,8 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-仮のキー')
 
 # デバッグモードの設定（開発中はTrue、本番ではFalseにする）
-# DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # 許可するホスト名のリスト（テスト環境ではローカルホストを許可）
 ALLOWED_HOSTS = [
