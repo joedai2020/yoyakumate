@@ -60,13 +60,13 @@ thead th {
         <td>{{ res.date }}</td>
         <td>{{ res.start_time }}～{{ res.end_time }}</td>
         <td class="text-center">
-          {% if res.date > now.date or (res.date == now.date and res.end_time > now.time) %}
+          {% if res.can_delete %}
             <form method="post" action="{% url 'reservations:delete_reservation' res.id %}" onsubmit="return confirm('本当にこの予約を削除しますか？');">
               {% csrf_token %}
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
             </form>
           {% else %}
-            <span class="text-muted">削除不可</span>
+            <span class="text-muted"></span>
           {% endif %}
         </td>
       </tr>

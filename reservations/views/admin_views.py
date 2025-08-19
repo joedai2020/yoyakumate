@@ -153,10 +153,10 @@ def facility_item_delete(request, item_id):
 def reservation_search(request):
     form = ReservationSearchForm(request.GET or None)
     reservations = []
-    
+
     if form.is_valid():
         reservations = Reservation.objects.all()
-        
+
         name = form.cleaned_data.get('name')
         phone = form.cleaned_data.get('phone')
         email = form.cleaned_data.get('email')
@@ -178,14 +178,20 @@ def reservation_search(request):
             reservations = reservations.filter(q_user | q_guest)
 
         date_from = form.cleaned_data.get('date_from')
-        
         if date_from:
             reservations = reservations.filter(date__gte=date_from)
+
+    now = timezone.localtime()
+    for res in reservations:
+        if res.date > now.date() or (res.date == now.date() and res.end_time > now.time()):
+            res.can_delete = True
+        else:
+            res.can_delete = False
+
     context = {
         'form': form,
         'reservations': reservations,
-        'now': timezone.localtime(),  # 現在時刻をテンプレートに渡す
-
+        'now': now,
     }
     return render(request, 'reservations/reservation_search.html', context)
 
