@@ -214,7 +214,7 @@ def select_time_slot(request):
     available_time_slots = [ts for ts in all_time_slots if ts.start_time not in reserved_start_times]
 
     reserved_count = len(all_time_slots) - len(available_time_slots)
-    if reserved_count > 0:
+    if reserved_count == 0:
         messages.info(request, f"{reserved_count}件の時間帯はすでに予約されています。")
 
     time_choices = [

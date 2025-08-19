@@ -256,7 +256,7 @@ class GuestTimeSlotForm(forms.Form):
     time_slot = forms.ModelChoiceField(
         queryset=FacilityTimeSlot.objects.none(),
         label='時間帯',
-        widget=forms.RadioSelect
+        widget=forms.Select
     )
 
     def __init__(self, facility_id=None, date=None, selected_slot_id=None, time_choices=None, *args, **kwargs):
