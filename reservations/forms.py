@@ -252,7 +252,6 @@ class GuestDateForm(forms.Form):
         self.fields['date'].widget.attrs['min'] = today.isoformat()
         self.fields['date'].widget.attrs['max'] = (today + timedelta(days=30)).isoformat()
 
-
 class GuestTimeSlotForm(forms.Form):
     time_slot = forms.ModelChoiceField(
         queryset=FacilityTimeSlot.objects.none(),
@@ -260,10 +259,20 @@ class GuestTimeSlotForm(forms.Form):
         widget=forms.RadioSelect
     )
 
-    def __init__(self, facility_id=None, *args, **kwargs):
+    def __init__(self, facility_id=None, date=None, selected_slot_id=None, time_choices=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if facility_id:
-            self.fields['time_slot'].queryset = FacilityTimeSlot.objects.filter(facility_id=facility_id)
+
+        # time_choices が渡されていれば、それに基づいて queryset を設定
+        if time_choices:
+            time_slot_ids = [int(choice[0]) for choice in time_choices]
+            self.fields['time_slot'].queryset = FacilityTimeSlot.objects.filter(id__in=time_slot_ids)
+
+        # 初期選択があれば設定
+        if selected_slot_id:
+            try:
+                self.initial['time_slot'] = FacilityTimeSlot.objects.get(id=selected_slot_id)
+            except FacilityTimeSlot.DoesNotExist:
+                pass  # 存在しない場合は無視
 
 class GuestUserForm(forms.Form):
     full_name = forms.CharField(label='氏名', max_length=100)

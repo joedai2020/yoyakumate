@@ -2,6 +2,7 @@ import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ObjectDoesNotExist
 from ..models import Reservation, FacilityItem, Facility, Reservation
 from ..forms import ManagementOffice, FacilityTimeSlot, SelectDateForm, SelectTimeSlotForm
 from ..utils import clear_reservation_session

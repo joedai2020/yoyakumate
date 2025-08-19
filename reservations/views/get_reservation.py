@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from ..models import FacilityItem, Facility ,TemporaryReservationUser, Reservation, FacilityTimeSlot
 from ..forms import ManagementOffice, GuestDateForm, GuestTimeSlotForm, GuestUserForm
 from ..utils import clear_guest_reservation_session
@@ -112,7 +114,6 @@ def guest_select_date(request):
             selected_date = (date.today() + timedelta(days=1)).isoformat()
         form = GuestDateForm(initial={'date': selected_date})
 
-
     return render(request, 'reservations/guest/get_select_date.html', {
         'form': form,
         'error': error,
@@ -120,28 +121,66 @@ def guest_select_date(request):
         'max_date': form.fields['date'].widget.attrs['max'],
     })
 
+
 def guest_select_time_slot(request):
     facility_id = request.session.get('guest_selected_facility')
-    if not facility_id:
+    selected_date = request.session.get('guest_selected_date')
+
+    if not (facility_id and selected_date):
         return redirect('reservations:guest_select_facility')
 
+    try:
+        facility = Facility.objects.get(id=facility_id)
+    except ObjectDoesNotExist:
+        messages.error(request, "施設が見つかりませんでした。")
+        return redirect('reservations:guest_select_facility')
+
+    # 予約済み時間帯の取得（ゲストは編集中の予約がないので除外不要）
+    reserved_qs = Reservation.objects.filter(
+        facilityItem__facility=facility,
+        date=selected_date
+    )
+    reserved_start_times = set(reserved_qs.values_list('start_time', flat=True))
+
+    # 全時間帯の取得とフィルタリング
+    all_time_slots = FacilityTimeSlot.objects.filter(facility=facility).order_by('start_time')
+    available_time_slots = [ts for ts in all_time_slots if ts.start_time not in reserved_start_times]
+
+    reserved_count = len(all_time_slots) - len(available_time_slots)
+    if reserved_count > 0:
+        messages.info(request, f"{reserved_count}件の時間帯はすでに予約されています。")
+
+    time_choices = [
+        (str(ts.id), f"{ts.start_time.strftime('%H:%M')} - {ts.end_time.strftime('%H:%M')}")
+        for ts in available_time_slots
+    ]
+
     selected_slot = request.session.get('guest_selected_time_slot')
-    error = None
 
     if request.method == 'POST':
-        form = GuestTimeSlotForm(facility_id, request.POST)
+        form = GuestTimeSlotForm(
+            facility_id=facility_id,
+            date=selected_date,
+            selected_slot_id=selected_slot,
+            data=request.POST,
+            time_choices=time_choices
+        )
         if form.is_valid():
             request.session['guest_selected_time_slot'] = form.cleaned_data['time_slot'].id
             return redirect('reservations:guest_user_info')
-        else:
-            error = '時間帯を選択してください。'
     else:
-        form = GuestTimeSlotForm(facility_id, initial={'time_slot': selected_slot})
+        form = GuestTimeSlotForm(
+            facility_id=facility_id,
+            date=selected_date,
+            selected_slot_id=selected_slot,
+            initial={'time_slot': selected_slot},
+            time_choices=time_choices
+        )
 
     return render(request, 'reservations/guest/get_select_time_slot.html', {
         'form': form,
-        'error': error,
     })
+
 
 def guest_user_info(request):
     error = None
