@@ -38,6 +38,22 @@ urlpatterns = [
     path('select_time_slot/', views.select_time_slot, name='select_time_slot'),
     path('reserve_confirm/', views.reserve_confirm, name='reserve_confirm'),
 
+    # ゲスト予約関連
+    path('guest/reserve/', views.guest_reservation, name='guest_reservation'),
+    path('guest/select_office/', views.guest_select_office, name='guest_select_office'),
+    path('guest/select_facility/', views.guest_select_facility, name='guest_select_facility'),
+    path('guest/select_item/', views.guest_select_item, name='guest_select_item'),
+    path('guest/select_date/', views.guest_select_date, name='guest_select_date'),
+    path('guest/select_time_slot/', views.guest_select_time_slot, name='guest_select_time_slot'),
+    # ユーザー情報入力画面（guest_user_info）
+    path('guest/user_info/', views.guest_user_info, name='guest_user_info'),
+
+    # 予約確認画面（guest_reserve_confirm）
+    path('guest/reserve_confirm/', views.guest_reserve_confirm, name='guest_reserve_confirm'),
+
+    # 完了画面（guest_complete）
+    path('guest/complete/', views.guest_complete, name='guest_complete'),
+
     # # ユーザー登録・ログイン
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),

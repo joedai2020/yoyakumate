@@ -228,3 +228,48 @@ class UserEditForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+class GuestReservationForm(forms.Form):
+    full_name = forms.CharField(label="氏名", max_length=100)
+    phone = forms.CharField(label="電話番号", max_length=20)
+    email = forms.EmailField(label="メールアドレス")
+    
+    facilityItem = forms.ModelChoiceField(label="施設", queryset=FacilityItem.objects.all())
+    date = forms.DateField(label="予約日", widget=forms.SelectDateWidget)
+    start_time = forms.TimeField(label="開始時間")
+    end_time = forms.TimeField(label="終了時間")
+
+
+class GuestDateForm(forms.Form):
+    date = forms.DateField(
+        label='予約日',
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        today = date.today()
+        self.fields['date'].widget.attrs['min'] = today.isoformat()
+        self.fields['date'].widget.attrs['max'] = (today + timedelta(days=30)).isoformat()
+
+
+class GuestTimeSlotForm(forms.Form):
+    time_slot = forms.ModelChoiceField(
+        queryset=FacilityTimeSlot.objects.none(),
+        label='時間帯',
+        widget=forms.RadioSelect
+    )
+
+    def __init__(self, facility_id=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if facility_id:
+            self.fields['time_slot'].queryset = FacilityTimeSlot.objects.filter(facility_id=facility_id)
+
+class GuestUserForm(forms.Form):
+    full_name = forms.CharField(label='氏名', max_length=100)
+    phone = forms.CharField(label='電話番号', max_length=20)
+    email = forms.EmailField(label='メールアドレス')
+
+
+
+

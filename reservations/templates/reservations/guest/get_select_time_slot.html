@@ -1,0 +1,13 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<a href="{% url 'reservations:guest_select_date' %}">← 日付選択に戻る</a>
+
+<h2>時間帯を選択してください（非登録ユーザー）</h2>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">次へ</button>
+</form>
+{% endblock %}

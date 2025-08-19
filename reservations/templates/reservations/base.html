@@ -1,225 +1,264 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8" />
-    <title>{% block title %}YoyakuMate 予約システム{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <title>{% block title %}YoyakuMate 予約システム{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 
-    <style>
-        /* ページ全体の背景色と基本フォント設定 */
-        body {
-            background-color: #d0e7f9;  /* 淡い青色 */
-            font-family: "メイリオ", "Hiragino Kaku Gothic ProN", sans-serif;
-            color: #1a1a1a;  /* 濃い文字色 */
-            padding-top: 70px;
-            font-size: 20px;
-            line-height: 1.6;
-        }
+  <style>
+    body {
+      background-color: #d0e7f9;
+      font-family: "メイリオ", "Hiragino Kaku Gothic ProN", sans-serif;
+      color: #1a1a1a;
+      padding-top: 70px;
+      font-size: 20px;
+      line-height: 1.6;
+    }
 
-        /* メインコンテンツのスタイル（白背景・角丸・影） */
-        #main-container {
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 30px 25px;
-            max-width: 900px;
-            margin: auto;
-        }
+    #main-container {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 30px 25px;
+      max-width: 900px;
+      margin: auto;
+    }
 
-        /* ナビゲーションバーの色とフォント */
-        nav.navbar {
-            background-color: #1e5fa0 !important;  /* 濃い青 */
-            font-weight: 700;
-            font-size: 1.3rem;
-        }
+    nav.navbar {
+      background-color: #1e5fa0 !important;
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
 
-        nav.navbar .navbar-brand {
-            color: #f9f9f9 !important;
-        }
+    nav.navbar .navbar-brand {
+      color: #f9f9f9 !important;
+    }
 
-        nav.navbar .nav-link {
-            color: #f1f1f1 !important;
-            font-weight: 600;
-            padding: 10px 15px;
-        }
+    nav.navbar .nav-link {
+      color: #f1f1f1 !important;
+      font-weight: 600;
+      padding: 10px 15px;
+    }
 
-        nav.navbar .nav-link:hover,
-        nav.navbar .nav-link:focus {
-            color: #ffd54f !important;  /* 柔らかい黄色 */
-            text-decoration: underline;
-        }
+    nav.navbar .nav-link:hover,
+    nav.navbar .nav-link:focus {
+      color: #ffd54f !important;
+      text-decoration: underline;
+    }
 
-        /* ボタンのスタイル（大きめ・角丸） */
-        .btn {
-            font-size: 1.25rem;
-            padding: 0.5rem 1.2rem;
-            border-radius: 8px;
-            font-weight: 600;
-        }
+    .btn {
+      font-size: 1.25rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 600;
+    }
 
-        .btn-primary {
-            background-color: #2a7ade;
-            border-color: #2a7ade;
-        }
+    .btn-primary {
+      background-color: #2a7ade;
+      border-color: #2a7ade;
+    }
 
-        .btn-primary:hover,
-        .btn-primary:focus {
-            background-color: #1e5fa0;
-            border-color: #1e5fa0;
-        }
+    .btn-primary:hover,
+    .btn-primary:focus {
+      background-color: #1e5fa0;
+      border-color: #1e5fa0;
+    }
 
-        /* 文字サイズ切り替えボタン */
-        .btn-font {
-            margin-left: 8px;
-            min-width: 50px;
-            font-weight: 700;
-        }
+    .btn-font {
+      margin-left: 8px;
+      min-width: 50px;
+      font-weight: 700;
+    }
 
-        /* 文字サイズクラス */
-        #main-container.font-small { font-size: 18px; }
-        #main-container.font-medium { font-size: 20px; }
-        #main-container.font-large { font-size: 24px; }
+    #main-container.font-small { font-size: 18px; }
+    #main-container.font-medium { font-size: 20px; }
+    #main-container.font-large { font-size: 24px; }
 
-        /* 入力フォームのスタイル（大きめ・視認性向上） */
-        input, select, textarea {
-            font-size: 1.2rem;
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            border: 1.8px solid #aaa;
-            width: 100%;
-        }
+    input, select, textarea {
+      font-size: 1.2rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: 1.8px solid #aaa;
+      width: 100%;
+    }
 
-        input:focus, select:focus, textarea:focus {
-            border-color: #2a7ade;
-            outline: none;
-            box-shadow: 0 0 5px rgba(42, 122, 222, 0.6);
-        }
+    /* radio ボタンの見た目を統一する */
+    input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        vertical-align: middle;
+        appearance: none;
+        border: 2px solid #2a7ade;
+        background-color: #fff;
+        cursor: pointer;
+        position: relative;
+    }
 
-        /* メッセージ表示（アラート）のスタイル */
-        .alert {
-            font-size: 1.15rem;
-            border-radius: 8px;
-        }
+    input[type="radio"]:checked::before {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #2a7ade;
+    }
 
-        /* スマートフォン向けのスタイル調整 */
-        @media (max-width: 768px) {
-            body {
-                font-size: 18px;
-                padding-top: 60px;
-            }
+    input:focus, select:focus, textarea:focus {
+      border-color: #2a7ade;
+      outline: none;
+      box-shadow: 0 0 5px rgba(42, 122, 222, 0.6);
+    }
 
-            nav.navbar {
-                font-size: 1.1rem;
-            }
+    .alert {
+      font-size: 1.15rem;
+      border-radius: 8px;
+    }
 
-            #main-container {
-                padding: 20px 15px;
-                margin: 15px;
-                width: 95%;
-            }
+    .form-check-input {
+      transform: scale(1.2);
+      margin-top: 0.3rem;
+    }
 
-            .btn {
-                font-size: 1.15rem;
-                padding: 0.45rem 1rem;
-            }
+    @media (max-width: 768px) {
+      body {
+        font-size: 18px;
+        padding-top: 60px;
+      }
 
-            .btn-font {
-                font-size: 0.95rem;
-                margin: 4px 0;
-            }
+      nav.navbar {
+        font-size: 1.1rem;
+      }
 
-            .navbar-nav .nav-item.d-flex {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-    </style>
+      #main-container {
+        padding: 20px 15px;
+        margin: 15px;
+        width: 95%;
+      }
 
-    {% block extra_head %}{% endblock %}
+      .btn {
+        font-size: 1.15rem;
+        padding: 0.45rem 1rem;
+      }
+
+      .btn-font {
+        font-size: 0.95rem;
+        margin: 4px 0;
+      }
+
+      .navbar-nav .nav-item.d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
 
 <nav class="navbar navbar-expand-md fixed-top">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'reservations:user_home' %}">YoyakuMate</a>
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'reservations:user_home' %}">YoyakuMate</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="ナビゲーション切り替え">
+      <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+    </button>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="ナビゲーション切り替え">
-            <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
-        </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto align-items-center">
+        {% if not user.is_authenticated %}
+          <li class="nav-item">
+            <a href="{% url 'reservations:guest_reservation' %}" class="nav-link fw-bold text-warning">ゲスト予約</a>
+          </li>
+        {% endif %}
 
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto align-items-center">
-                <li class="nav-item d-flex align-items-center me-3">
-                    <span class="text-white me-2">文字サイズ:</span>
-                    <button class="btn btn-light btn-sm btn-font" onclick="setFontSize('small')">小</button>
-                    <button class="btn btn-light btn-sm btn-font" onclick="setFontSize('medium')">中</button>
-                    <button class="btn btn-light btn-sm btn-font" onclick="setFontSize('large')">大</button>
-                </li>
+        <li class="nav-item d-flex align-items-center me-3">
+          <span class="text-white me-2">文字サイズ:</span>
+          <button class="btn btn-light btn-sm btn-font" onclick="setFontSize('small')">小</button>
+          <button class="btn btn-light btn-sm btn-font" onclick="setFontSize('medium')">中</button>
+          <button class="btn btn-light btn-sm btn-font" onclick="setFontSize('large')">大</button>
+        </li>
 
-                {% if user.is_authenticated %}
-                    <li class="nav-item me-2">
-                        {% if now_hour >= 18 or now_hour < 5 %}
-                            <span class="nav-link fw-bold">こんばんは、{{ user.full_name }} さん</span>
-                        {% else %}
-                            <span class="nav-link fw-bold">こんにちは、{{ user.full_name }} さん</span>
-                        {% endif %}
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'reservations:logout' %}" class="nav-link fw-bold">ログアウト</a>
-                    </li>
-                {% else %}
-                    <li class="nav-item">
-                        <a href="{% url 'reservations:login' %}" class="nav-link fw-bold">ログイン</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'reservations:register' %}" class="nav-link fw-bold">登録</a>
-                    </li>
-                {% endif %}
-            </ul>
-        </div>
+        {% if user.is_authenticated %}
+          <li class="nav-item me-2">
+            {% if now_hour >= 18 or now_hour < 5 %}
+              <span class="nav-link fw-bold">こんばんは、{{ user.full_name }} さん</span>
+            {% else %}
+              <span class="nav-link fw-bold">こんにちは、{{ user.full_name }} さん</span>
+            {% endif %}
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'reservations:logout' %}" class="nav-link fw-bold">ログアウト</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a href="{% url 'reservations:login' %}" class="nav-link fw-bold">ログイン</a>
+          </li>
+          <li class="nav-item">
+            <a href="{% url 'reservations:register' %}" class="nav-link fw-bold">登録</a>
+          </li>
+        {% endif %}
+      </ul>
     </div>
+  </div>
 </nav>
 
 <div class="container mt-4" id="main-container" tabindex="0">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="閉じる"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
 
-    {% block content %}{% endblock %}
+  {% block content %}
+  <!-- ✅ Radio Button 示例 -->
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-4">
+      <label class="form-label">予約タイプを選択してください:</label>
+      <div class="d-flex flex-column gap-2">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="reservation_type" id="type1" value="standard">
+          <label class="form-check-label" for="type1">通常予約</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="reservation_type" id="type2" value="premium">
+          <label class="form-check-label" for="type2">プレミアム予約</label>
+        </div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">送信</button>
+  </form>
+  {% endblock %}
 </div>
 
-<!-- Bootstrap 5 JS（Popper含む） -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-    // 文字サイズ切り替え処理
-    function setFontSize(size) {
-        const container = document.getElementById("main-container");
-        container.classList.remove("font-small", "font-medium", "font-large");
-        if (size === "small") {
-            container.classList.add("font-small");
-        } else if (size === "medium") {
-            container.classList.add("font-medium");
-        } else if (size === "large") {
-            container.classList.add("font-large");
-        }
-        container.focus();  // アクセシビリティ対応
+  // 文字サイズ切り替え処理
+  function setFontSize(size) {
+    const container = document.getElementById("main-container");
+    container.classList.remove("font-small", "font-medium", "font-large");
+    if (size === "small") {
+      container.classList.add("font-small");
+    } else if (size === "medium") {
+      container.classList.add("font-medium");
+    } else if (size === "large") {
+      container.classList.add("font-large");
     }
+    container.focus();  // アクセシビリティ対応
+  }
 
-    // 初期設定：中サイズ
-    document.addEventListener("DOMContentLoaded", () => {
-        setFontSize("medium");
-    });
+  // ページ読み込み時に中サイズを適用
+  document.addEventListener("DOMContentLoaded", () => {
+    setFontSize("medium");
+  });
 </script>
-
-</body>
-</html>

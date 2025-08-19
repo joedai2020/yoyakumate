@@ -1,0 +1,30 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<a href="{% url 'reservations:guest_select_time_slot' %}">← 時間帯選択に戻る</a>
+
+<h2>予約内容確認（非登録ユーザー）</h2>
+
+{% if error %}
+  <p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<h4>ユーザー情報</h4>
+<p>氏名: {{ guest_info.full_name }}</p>
+<p>電話番号: {{ guest_info.phone }}</p>
+<p>メールアドレス: {{ guest_info.email }}</p>
+
+<hr>
+
+<h4>予約情報</h4>
+<p>管理所: {{ office.name }}</p>
+<p>施設タイプ: {{ facility.name }}</p>
+<p>具体設備: {{ item.item_name }}</p>
+<p>予約日: {{ selected_date }}</p>
+<p>時間帯: {{ time_slot.start_time|date:"H:i" }} - {{ time_slot.end_time|date:"H:i" }}</p>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit">予約確定</button>
+</form>
+{% endblock %}

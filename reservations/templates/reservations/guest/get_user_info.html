@@ -1,0 +1,19 @@
+{% extends 'reservations/base.html' %}
+
+{% block title %}非登録ユーザー情報入力 | YoyakuMate{% endblock %}
+
+{% block content %}
+<a href="{% url 'reservations:guest_select_time_slot' %}">← 時間帯選択に戻る</a>
+
+<h2 class="mb-4 fw-bold text-center">非登録ユーザー情報入力</h2>
+
+{% if error %}
+  <p style="color:red;">{{ error }}</p>
+{% endif %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary mt-3">次へ</button>
+</form>
+{% endblock %}

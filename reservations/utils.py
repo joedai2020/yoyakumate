@@ -18,3 +18,18 @@ def clear_reservation_session(request):
     keys = ['selected_office', 'selected_facility', 'selected_item', 'selected_date', 'selected_time_slot']
     for key in keys:
         request.session.pop(key, None)
+
+
+def clear_guest_reservation_session(request):
+    keys = [
+        'guest_selected_office',
+        'guest_selected_facility',
+        'guest_selected_item',
+        'guest_selected_date',
+        'guest_selected_time_slot',
+        'guest_user_id',
+    ]
+    for key in keys:
+        request.session.pop(key, None)
+
+        

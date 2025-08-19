@@ -1,0 +1,27 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+{% if single_office %}
+  <!-- 管理所が1件のみの場合は戻るリンクなし -->
+{% else %}
+  <a href="{% url 'reservations:guest_select_office' %}">← 管理所選択に戻る</a>
+{% endif %}
+
+<h2>施設タイプを選択してください（非登録ユーザー）</h2>
+
+{% if error %}
+  <p style="color:red;">{{ error }}</p>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  {% for facility in facilities %}
+    <div>
+      <input type="radio" id="facility{{ facility.id }}" name="facility_id" value="{{ facility.id }}"
+        {% if facility.id == selected_facility %}checked{% endif %}>
+      <label for="facility{{ facility.id }}">{{ facility.name }}</label>
+    </div>
+  {% endfor %}
+  <button type="submit">次へ</button>
+</form>
+{% endblock %}

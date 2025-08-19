@@ -1,4 +1,4 @@
-import pytz, datetime
+import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -237,7 +237,6 @@ def select_time_slot(request):
 
 # 6. 予約確認・保存
 @login_required
-
 def reserve_confirm(request):
     office_id = request.session.get('selected_office')
     facility_id = request.session.get('selected_facility')

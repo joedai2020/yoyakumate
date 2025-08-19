@@ -1,0 +1,21 @@
+{% extends 'reservations/base.html' %}
+
+{% block content %}
+<h2>管理所を選択してください（非登録ユーザー）</h2>
+
+{% if error %}
+  <p style="color:red;">{{ error }}</p>
+{% endif %}
+
+<form method="post">
+  {% csrf_token %}
+  {% for office in offices %}
+    <div>
+      <input type="radio" id="office{{ office.id }}" name="office_id" value="{{ office.id }}"
+        {% if office.id == selected_office %}checked{% endif %}>
+      <label for="office{{ office.id }}">{{ office.name }}</label>
+    </div>
+  {% endfor %}
+  <button type="submit">次へ</button>
+</form>
+{% endblock %}
