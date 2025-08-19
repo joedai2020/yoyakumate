@@ -14,8 +14,13 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'False'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    'yoyakumate-a7fzbyf9c9acdnes.japanwest-01.azurewebsites.net',
+]
+
+CSRF_TRUSTED_ORIGINS = [
     'https://yoyakumate-a7fzbyf9c9acdnes.japanwest-01.azurewebsites.net',
 ]
+
 
 # インストール済みアプリケーションのリスト
 INSTALLED_APPS = [
