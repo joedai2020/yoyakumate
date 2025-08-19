@@ -13,6 +13,7 @@ urlpatterns = [
     
     path('reservations/search/', views.reservation_search, name='reservation_search'),
     path('reservation_delete/<int:reservation_id>/', views.reservation_delete, name='reservation_delete'),
+    path('reservation/delete/<int:pk>/', views.delete_reservation, name='delete_reservation'),
 
     # # 施設（麻将、棋牌、乒乓など）一覧・詳細
     path('facilities/', views.facility_list, name='facility_list'),

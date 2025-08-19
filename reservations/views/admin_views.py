@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.db.models import Count
 from django.contrib.auth.decorators import login_required,user_passes_test
 from django.db.models import Q
+from django.utils import timezone
 from ..models import Reservation, FacilityItem, Facility, Reservation
 from ..forms import FacilityForm, FacilityItemForm, ReservationSearchForm, UserSearchForm, CustomUser, UserEditForm
 from ..utils import is_manager, get_timeslot_formset
@@ -136,8 +137,7 @@ def facility_item_edit(request, item_id):
         'form': form
     })
 
-@login_required
-@user_passes_test(is_manager, login_url='reservations:user_home')
+@manager_required
 def facility_item_delete(request, item_id):
     item = get_object_or_404(FacilityItem, id=item_id)
     facility_id = item.facility.id
@@ -184,9 +184,17 @@ def reservation_search(request):
     context = {
         'form': form,
         'reservations': reservations,
+        'now': timezone.localtime(),  # 現在時刻をテンプレートに渡す
+
     }
     return render(request, 'reservations/reservation_search.html', context)
 
+@manager_required
+def delete_reservation(request, pk):
+    if request.method == 'POST':
+        reservation = get_object_or_404(Reservation, pk=pk)
+        reservation.delete()
+    return redirect('reservations:reservation_search')  # 一覧ページに戻る
 
 @manager_required
 def user_manage(request):
